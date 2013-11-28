@@ -1,0 +1,17 @@
+[user]
+	name = tu-vu-duy
+	email = tuvd@exoplatform.com
+[alias]
+	lg = log --oneline -10
+	revertall = reset --hard
+	conf = config -l
+	br = branch
+	brall = branch -a
+	co = checkout
+	ci = commit
+	st = status
+	rvci = rebase -i HEAD~1
+	mgbase = merge-base origin/HEAD HEAD
+	prebase = pull --rebase origin master
+[core]
+	excludesfile = /home/tuvd/.gitignore_global

@@ -1,0 +1,35 @@
+Install:
+
+1/ edit file exoenv.sh from java folder
+2/ add new line: source "$JAVA_DIR/social-tools.sh";
+3/ cp this file social-tools.sh for java folder for tools
+
+Detail functions:
+
+1/ makefeature 'feature-name' 'projects'
+		feature-name ==> feature-name: activity-type
+		projects ==>> tat ca nhung projects lien quan
+		ex: makefeature 'activity-type' 'forum commons social platform ecms wiki '
+
+2/ checkoutFeature 'feature-name' vd: checkoutFeature 'activity-type'
+
+3/ eclipseAll ==> lenh nay se chay mvn eclipse:eclipse cho tat ca cac projects trong 1 folder
+
+4/ buildAll ==> lenh nay se chay mvninstall cho tat ca cac projects trong 1 folder
+
+5/ changeVersion 'new-version' ==> change version trong POM.xml cua project
+		viet con 5 de tien cho anh re-version
+		vd: changeVersion '4.0.0.Alpha-filter-SNAPSHOT'
+
+6/ gitcmall ==> lenh nay se ap dung chay lenh git cho tat ca cac projects trong folder
+	  vd: gitcmall 'pull origin'
+	  Voi lenh gitcmall, ban co the tuy bien rong hon 
+	  vd: gitcmall 'checkout feature/activity-filter && mvninstall'
+	  voi cach danh tren, ban se ko phai build cac projects ko co branch feature/activity-filter, 
+	  no chi build cac projects co branch feature/activity-filter trong folder.
+
+7/ cmprojectall 'projects' 'commands' ==> chay lenh cac projects vd: 
+		vd: cmprojectall 'commons social forum platform' 'git pull origin && mvn clean install -Pexo-private'
+		no se chay lan luot cac project theo lenh sau do, theo dung thu tu liet ke
+
+Tuy bien lenh cmprojectall de su dung het kha nang cua no theo y ban.

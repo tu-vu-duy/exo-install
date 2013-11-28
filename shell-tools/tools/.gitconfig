@@ -1,0 +1,16 @@
+[core]
+	excludesfile = ~/.gitignore_global
+[alias]
+	lg = log --oneline -20
+	revertall = reset --hard
+	conf = config -l
+	br = branch
+	brall = branch -a
+	co = checkout
+	ci = commit
+	st = status
+	rvci = rebase -i HEAD~1
+	prebase = pull --rebase origin feature/relooking
+[user]
+	name = tu-vu-duy
+	email = tuvd@exoplatform.com

@@ -1,0 +1,12 @@
+#!/bin/sh
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Name=Terminal
+Comment=Use the command line
+#TryExec=gnome-terminal
+Icon=utilities-terminal
+Type=Application
+Terminal=true
+Exec=gnome-terminal --execute bash -c "dir=`echo %k` &&  dir=${dir/install.desktop/} && source ${dir}run.sh; bash"
+Name[en_US]=install
