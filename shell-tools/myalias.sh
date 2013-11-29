@@ -82,8 +82,7 @@ function gedit() {
 	eval "geany $* &";
 }
 
-alias sourcedl="source $TOOL_HOME/tools/download.sh"
-alias mdfdl="gedit $TOOL_HOME/tools/download.sh &"
+alias mdfdl="gedit $TOOL_HOME/download.sh &"
 
 function mdf_() { 
   eval "gedit $1 &"; 

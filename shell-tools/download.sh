@@ -383,20 +383,19 @@ function hctinfo()
         #unset hctinfo;
 }
 
-INFO "configSettings";
-
 function configSettings() {
   ME=$(whoami);
 
   INFO "Configuration settings.xml of maven";
-  INFO "If you configuration error, you can open the file $USER_HOME/java/apache-maven-3.0.4/conf/settings.xml and manual configuration";
+  INFO "If you configuration error, you can open the file $HOME/java/apache-maven-3.0.4/conf/settings.xml and manual configuration";
 
-  #cd "$USER_HOME/java/apache-maven-3.0.4/conf"
+  #cd "$HOME/java/apache-maven-3.0.4/conf"
   eval "find -depth -name \"settings.xml\" | xargs sed -i -e 's/JAVA_DIR/\/home\/$ME\/java/g';"
   
-  #cd "$USER_HOME/java/apache-maven-3.0.4/conf"
-  read -s -n100 -p "Enter the your Identity of LDAP:" USER_ID
-  read -s -n100 -p "Enter the your Password of LDAP:" USER_PASS
+  #cd "$HOME/java/apache-maven-3.0.4/conf"
+  read -n100 -p "Enter the your Identity of LDAP: " USER_ID
+  echo "";
+  read -n100 -p "Enter the your Password of LDAP: " USER_PASS
 
   eval "find -depth -name \"settings.xml\" | xargs sed -i -e 's/IDENTITY_LDAP/$USER_ID/g';"
   eval "find -depth -name \"settings.xml\" | xargs sed -i -e 's/PASS_LDAP/$USER_PASS/g';"

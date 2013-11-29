@@ -22,16 +22,18 @@ USER_HOME='/cygdrive/c/Documents\ and\ Settings/$USERNAME'
 EXO_PROJECTS_SRC=$EXO_BASE_DIRECTORY/eXoProjects
 EXO_WORKING_DIR=$EXO_BASE_DIRECTORY/exo-working
 
-M2_HOME="$EXO_BASE_DIRECTORY/maven3.0.4"
+M2_HOME="$EXO_BASE_DIRECTORY/maven-3.1.1"
 
-if [ ! -e $M2_HOME ]; then 
-  M2_HOME=$JAVA_DIR/`ls --color=never $JAVA_DIR | grep --color=never 'maven.*3.0.' | awk '{print $1}'`
+if [ ! -e $M2_HOME ]; then
+  MV=`find -maxdepth 1 -type d -name '*maven*3.1*'`;
+  MV=`echo $MV | awk '{print $1}'`
+  M2_HOME=$JAVA_DIR/${MV/\.\//};
   cd $M2_HOME;
   M2_HOME=$PWD;
   cd $JAVA_DIR;
 fi
 
-M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository, http://repository.exoplatform.vn/nexus/content/groups/all, http://repo1.maven.org/maven2"
+M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository, http://repository.exoplatform.org/nexus/content/groups/all, http://repo1.maven.org/maven2"
 MAVEN_OPTS="-Xshare:auto -Xms512m -Xmx1536m -XX:MaxPermSize=128m" 
 T2C="";
 EXO_DEV=true;
@@ -63,3 +65,7 @@ eval "X=(${PWD//\// })"
 if [ -n "${X[9]}" ]; then 
   eval "plfprompt";
 fi
+if [ ! -e "$JAVA_DIR/apache-maven-3.1.1" ]; then 
+  source "$TOOL_HOME/upgrade-maven.sh";
+fi
+
