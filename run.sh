@@ -33,7 +33,7 @@ makeFolder;
 # copy maven
 function cpmaven() {
   INFO "Copy maven3.0.4";
-  eval "cp apache-maven-3.0.4 $HOME/java/";
+  eval "cp apache-maven-3.1.1 $HOME/java/";
   sleep 1s;
 }
 cpmaven;
@@ -55,12 +55,12 @@ function configSettings() {
   ME=$(whoami);
 
   INFO "Configuration settings.xml of maven";
-  INFO "If you configuration error, you can open the file $HOME/java/apache-maven-3.0.4/conf/settings.xml and manual configuration";
+  INFO "If you configuration error, you can open the file $HOME/java/apache-maven-3.1.1/conf/settings.xml and manual configuration";
 
-  cd "$HOME/java/apache-maven-3.0.4/conf"
+  cd "$HOME/java/apache-maven-3.1.1/conf"
   eval "find -depth -name \"settings.xml\" | xargs sed -i -e 's/JAVA_DIR/\/home\/$ME\/java/g';"
   
-  cd "$HOME/java/apache-maven-3.0.4/conf"
+  cd "$HOME/java/apache-maven-3.1.1/conf"
   read -n100 -p "Enter the your Identity of LDAP: " USER_ID
   echo "";
   read -n100 -p "Enter the your Password of LDAP: " USER_PASS
