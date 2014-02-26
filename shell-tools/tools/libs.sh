@@ -164,8 +164,8 @@ function plfprompt()
     case $TERM in
         *term | rxvt )
             PS1="${HILIT}[\h]$NC \W > \[\033]0;\${TERM} [\u@\h] \w\007\]" ;;
-	linux )
-	    PS1="${HILIT}[\h]$NC \W > " ;;
+        linux )
+            PS1="${HILIT}[\h]$NC \W > " ;;
         *)
             PS1="[\h] \W > " ;;
     esac

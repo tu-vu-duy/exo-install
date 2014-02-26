@@ -156,12 +156,40 @@ function hasparam() {
 function containText() {
 	int1="$1";# B
 	int2="$2";# A
-	X=$(echo $int2 | sed -e "s/$int1//g");
+	X=${int2/$int1/};
 	if [ "$X" == "$int2" ]; then
 		echo "NOK";
 	else
 		echo "OK";
 	fi
+}
+
+function currentBranch() {
+  cr=$(git branch | grep --color=never '\*');
+  crs=($cr);
+  CRBR="";
+  for arg  in ${crs[@]}
+    do
+      if [ ! -e  "$PWD/$arg" ]; then
+        CRBR=$arg;
+      fi 
+  done
+  echo $CRBR;
+}
+
+function irm() {
+  local RM="$1";
+  if [ -n  "$RM" ]; then
+    local S="";
+    if [ $(containText "*" "$RM") == "OK" ]; then
+      RM=${RM/\*/};
+      S="*";
+    fi
+    if [ -e  "$RM" ]; then
+      INFO "Removing folder/file: ${RM}${S}";
+      eval "rm -rf ${RM}${S}";
+    fi
+  fi
 }
 
 # convert version: 
@@ -354,6 +382,12 @@ function runtomcat() {
      fi 
   done
 
+  if [ -n "$project" ]; then
+    eval "setTomcatDir $project";
+  else 
+    eval "getTomcatDir";
+  fi
+
   OPWD="$PWD"
   oldprj="$CRPRJ"
   if [ "$project" == "" ]; then
@@ -397,11 +431,16 @@ function runByParam() {
 }
 
 function getTomcatDir() {
+  if [ -e "/tmp/my/tomcatdir.sh" ]; then 
+    eval "command source /tmp/my/tomcatdir.sh";
+  fi
+
 	if [ ! -e "$EXO_TOMCAT" ] || [ $(containText "target" "$EXO_TOMCAT") == "NOK" ]; then
 		local OLPWD=$PWD;
 		local X="$EXO_TOMCAT_CONF";
 		cd "$X";
 		X=`find -maxdepth 5 -name 'catalina.sh' | sed -e 's/bin.*//'`;
+    X=`echo $X | awk '{print $1}'`;
 		X=${X/\.\//};
 		cd "$X";
 		EXO_TOMCAT=$PWD;
@@ -411,10 +450,36 @@ function getTomcatDir() {
 	fi
 }
 
+function setTomcatDir() {
+  SET_DIR="";
+  if [ -e "$1" ]; then
+    EXO_TOMCAT="$1";
+    EXO_TOMCAT_DIR="$1";
+    SET_DIR="OK";
+    echo "EXO_TOMCAT_DIR=$1;  EXO_TOMCAT=$1; export EXO_TOMCAT EXO_TOMCAT_DIR;" > "/tmp/my/tomcatdir.sh";
+		export EXO_TOMCAT EXO_TOMCAT_DIR;
+  elif [ $(containText "home/" "$1") == "NOK" ]; then
+    rm -rf /tmp/my/tomcatdir.sh;
+    #EXO_TOMCAT_BUILD=`echo $EXO_TOMCAT_CONF | sed -e 's/\/targ.*//'`;
+    if [ $(containText "4.0.x" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.0.x-SNAPSHOT/platform-4.0.x-SNAPSHOT";
+    elif [ $(containText "stabilization" "$1") == "OK" ] || [ $(containText "4.1.x" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-stabilization-SNAPSHOT/platform-4.1.x-pkgpriv-stabilization-SNAPSHOT";
+    elif [ $(containText "notifications" "$1") == "OK" ] || [ $(containText "social-notifications" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT";
+    elif [ $(containText "infinispan" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT";
+    elif [ $(containText "4.1.0" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/4.1.0-SNAPSHOT/4.1.0-SNAPSHOT";
+    fi
+  fi
+}
+
 function cdtomcat() {
 	getTomcatDir;
 	plfprompt;
   cd $EXO_TOMCAT_DIR
+  
 }
 
 function optomcat() {
@@ -427,7 +492,7 @@ function tomcatClean() {
   Opwd=$PWD
   getTomcatDir;
   cd $EXO_TOMCAT_DIR
-  rm -rf temp work logs gatein/data gatein/logs
+  rm -rf temp/* work/* logs/* gatein/data gatein/logs
   cd $Opwd
 }
 
@@ -667,6 +732,7 @@ function sendtotomcat() {
    tcDir="$1";
    juzu="$2";
    INFO "Find all file *.war";
+   eval "find -type d -name 'bin' | xargs rm -rf";
    wars=$(find -name *.war)
    temp="";
    for X in ${wars[@]}
@@ -1072,12 +1138,25 @@ function gpatch() {
 }
 
 # auto complete
+
+_setTomcatDir ()  
+{
+
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  # The params
+  local opts="stabilization notifications 4.0.x 4.1.x 4.1.0"
+  # Array variable storing the possible completions.
+  COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+
+complete -F "_setTomcatDir" -o "default" "setTomcatDir"
+
 _runtomcat ()  
 {           
 
   local cur="${COMP_WORDS[COMP_CWORD]}"
   # The params
-  local opts="$ALISAS_SOURCE debug=true profile="
+  local opts="$ALISAS_SOURCE 4.0.x 4.1.x 4.1.0 stabilization notifications debug=true profile="
   # Array variable storing the possible completions.
   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
 }

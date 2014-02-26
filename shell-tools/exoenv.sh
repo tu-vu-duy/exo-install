@@ -34,7 +34,7 @@ if [ ! -e $M2_HOME ]; then
 fi
 
 M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository, http://repository.exoplatform.org/nexus/content/groups/all, http://repo1.maven.org/maven2"
-MAVEN_OPTS="-Xshare:auto -Xms512m -Xmx1536m -XX:MaxPermSize=128m" 
+MAVEN_OPTS="-Xshare:auto -Xms1G -Xmx2G -XX:MaxPermSize=256m" 
 T2C="";
 EXO_DEV=true;
 EXO_DEBUG=true;
@@ -42,7 +42,7 @@ EXO_TOMCAT_UNPACK_WARS=true;
 EXO_JCR_SESSION_TRACKING=false;
 
 #echo "This is a test"
-JAVA_OPTS="-Xshare:auto -Xms512m -Xmx1536m -XX:MaxPermSize=128m -Dexo.directory.base=$EXO_BASE_DIRECTORY" 
+JAVA_OPTS="-Xshare:auto -Xms512m -Xmx1536m -XX:MaxPermSize=256m -Dexo.directory.base=$EXO_BASE_DIRECTORY" 
 PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH:$M2_HOME/bin
 
 if [ "$OLD" == "$PORTABLE_DIR" ] ; then

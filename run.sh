@@ -33,7 +33,7 @@ makeFolder;
 # copy maven
 function cpmaven() {
   INFO "Copy maven3.0.4";
-  eval "cp apache-maven-3.1.1 $HOME/java/";
+  eval "cp -rf apache-maven-3.1.1 $HOME/java/";
   sleep 1s;
 }
 cpmaven;

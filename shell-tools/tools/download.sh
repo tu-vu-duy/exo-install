@@ -219,11 +219,10 @@ function findgrep() {
 
     for X in "${finds[@]}"; do
       if [ -n "$X" ]; then 
-      INFO "$X";
         if [ -n "$3" ]; then 
-          grep --color=always  "$key" "$X" > '$3';
+          grep --color=always  "$key" $X > '$3';
         else
-          kq=`grep --color=always  "$key" "$X"`;
+          kq=`grep --color=always  "$key" $X`;
           if [ -n "$kq" ]; then
             echo "";
             echo "File: $X";

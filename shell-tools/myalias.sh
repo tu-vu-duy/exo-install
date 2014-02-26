@@ -1,9 +1,10 @@
-source $TOOL_HOME/tools/libs.sh;
+source "$TOOL_HOME/tools/libs.sh;"
 #source $TOOL_HOME/tools/bash_completion/bash_completion;
 source "$TOOL_HOME/download.sh";
 
 alias mdfmyalias="gedit $TOOL_HOME/myalias.sh &"
 alias opjava="nautilus $JAVA_DIR";
+CRBR="";
 
 function gitpatch() {
       eval 'if [ $JIRA_NUMBER == "TEMP" ]; then export JIRA_NUMBER="$(date -u +%h%M)"; fi &&
@@ -22,12 +23,22 @@ alias mvnclean="mvn eclipse:clean"
 
 alias svndiff="svn diff > tem.patch && sleep 1s && mdf tem.patch && sleep 1s && rm tem.patch";
 
+if [ ! -n "$PASSSQL" ]; then
+  PASSSQL="root";
+fi
 
 function getdb() {
   dbuser="root";
-  dbpass="root";
+  dbpass="$PASSSQL";
   dbname="$1";
   action="$2";
+  if [ -n "$3" ]; then
+    dbuser="$3";
+  fi
+  if [ -n "$4" ]; then
+    dbpass="$4";
+  fi
+  
   exist="false";
   DBS=`mysql -u$dbuser -p$dbpass -Bse 'show databases'| egrep -v 'information_schema|mysql'`
   for db in $DBS; do
@@ -45,37 +56,94 @@ function getdb() {
 }
 
 function runbysql() {
-  action="$1"
-  data="plf_mic_jcr";
-  user="plf_mic_idm";
-  if [ -n "$2" ] && [ -n "$3" ]; then
-    data="$2";
-    user="$3";
-  fi
-  
+  user="root";
+  pass="$PASSSQL";
+  dbJcr="plf_mic_jcr";
+  dbIdm="plf_mic_idm";
+  action="no";
   Opwd="$PWD";
+  cd $EXO_TOMCAT_BUILD;
+  version=$(currentBranch);
   
-  getTomcatDir;
-
-  mv $EXO_TOMCAT/conf/server.xml $EXO_TOMCAT/conf/server_b.xml;
-  cp $EXO_TOMCAT/conf/server-mysql.xml $EXO_TOMCAT/conf/server.xml;
-  cd $EXO_TOMCAT/conf/;
-  if [ -e "$TOOL_HOME/libs/server.xml" ]; then
-    INFO "cp $TOOL_HOME/libs/server.xml $EXO_TOMCAT/conf/";
-    cp $TOOL_HOME/libs/server.xml $EXO_TOMCAT/conf/;
-    eval "findsed 'plf_mic_jcr' '$data' 'server.xml'";
-    eval "findsed 'plf_mic_idm' '$user' 'server.xml'";
-  else 
-    eval "findsed 'plf' '$data' 'server.xml'";
-    eval "findsed 'plf' '$user' 'server.xml'";
+  #--user=root --pass=root --db-jcr=plf_mic_jcr --db-idm=plf_mic_idm --help -h --rm -r
+  
+  input=($*);
+  local i=0;
+  for arg  in "$@" 
+    do
+     argM="${arg/--/}";
+     (( ++i));
+     next="${input[$i]}";
+     if [ $(containText "user=" "$arg") == "OK" ]; then 
+       user="${argM/user=/}";
+     elif [ "$arg" == "-u" ]; then
+       user="$next";
+     elif [ $(containText "pass=" "$arg") == "OK" ]; then
+       pass="${argM/pass=/}";
+     elif [ "$arg" == "-p" ]; then
+       pass="$next";
+     elif [ $(containText "db-jcr=" "$arg") == "OK" ]; then
+       dbJcr="${argM/db-jcr=/}";
+     elif [ "$arg" == "-j" ]; then
+       dbJcr="$next";
+     elif [ $(containText "db-idm=" "$arg") == "OK" ]; then
+       dbIdm="${argM/db-idm=/}";
+     elif [ "$arg" == "-i" ]; then
+       dbIdm="$next";
+    elif [ $(containText "version=" "$arg") == "OK" ]; then
+       version="${argM/version=/}";
+     elif [ "$arg" == "-v" ]; then
+       version="$next";
+     elif [ "$arg" == "--rm" ] || [ "$arg" == "-r" ]; then
+       action="rm";
+     elif [ "$arg" == "--help" ] || [ "$arg" == "-h" ]; then
+       INFO "The function runbysql help configuration and run PLF-tomcat width db is mysql";
+       echo "usage: runbysql [--user] [--pass] [--db-jcr] [--db-idm] [--remove] [-r] [--help] [-h] ";
+       echo "";
+       echo "Recursive:";
+       echo "   -u   --user        The username to login your MySql server."
+       echo "   -p   --pass        The password to login your MySql server."
+       echo "   -j   --db-jcr      The database name to storage jcr."
+       echo "   -i   --db-idm      The database name to storage system users."
+       echo "   -r   --rm          Remove the old database on MySql and folder gatein/data on tomcat."
+       echo "   -h   --help        Show help in console"
+       echo "";
+       echo "Mail bug reports and suggestions to <duytucntt@gmail.com>";
+       echo "";
+       action="cancel";
+     fi 
+  done
+  #//
+  if [ ! "$action" == "cancel" ]; then
+    # //
+    if [ -n "$version" ]; then
+      eval "setTomcatDir $version";
+    fi
+    getTomcatDir;
+    B=$(date +%H_%M_%d);
+    mv $EXO_TOMCAT/conf/server.xml $EXO_TOMCAT/conf/server_$B.xml;
+    cp $EXO_TOMCAT/conf/server-mysql.xml $EXO_TOMCAT/conf/server.xml;
+    cd $EXO_TOMCAT/conf/;
+    if [ -e "$TOOL_HOME/libs/server.xml" ]; then
+      INFO "cp $TOOL_HOME/libs/server.xml $EXO_TOMCAT/conf/";
+      cp $TOOL_HOME/libs/server.xml $EXO_TOMCAT/conf/;
+      eval "findsed 'plf_mic_jcr' '$dbJcr' 'server.xml'";
+      eval "findsed 'plf_mic_idm' '$dbIdm' 'server.xml'";
+      
+      eval "findsed 'username=\"root\"' 'username=\"$user\"' 'server.xml'"
+      eval "findsed 'password=\"root\"' 'password=\"$pass\"' 'server.xml'"
+    else 
+      eval "findsed 'plf' '$dbJcr' 'server.xml'";
+      eval "findsed 'plf' '$dbIdm' 'server.xml'";
+    fi
+    if [ "$action" == "rm" ]; then
+      cd ../
+      rm -rf gatein/data/*
+    fi
+    cd $Opwd;
+    eval "getdb $dbJcr $action $user $pass && getdb $dbIdm $action $user $pass && runtomcat" ;
   fi
-  if [ "$action" == "rm" ]; then
-    cd ../
-    rm -rf gatein/data/*
-  fi
-
   cd $Opwd;
-  eval "getdb $data $action && getdb $user $action && runtomcat" ;
 }
 
 function gedit() {
@@ -95,7 +163,6 @@ alias gitlog='git log > /tmp/temp.log && sleep 1 && gedit /tmp/temp.log &';
 alias gitconf="gedit .git/config";
 alias cdmygit="cd mygit/";
 
-
 patchDiff="/tmp/my/tmp.patch";
 function gitdiff() {
   git diff $*  > $patchDiff && sleep 2s && gedit $patchDiff;
@@ -112,6 +179,7 @@ if [ ! -e /tmp/my/$PDate.my ]; then
 	eval "echo '$PDate' > /tmp/my/$PDate.my";
 	#eval "insync-kde &"
 	FIRST="true";
+  echo "$TOOL_HOME";
 fi
 
 
@@ -180,8 +248,8 @@ alias gitlg="git lg";
 
 function tomcatinject() {
 	getTomcatDir;
-	INFO "copy $TOOL_HOME/libs/injection-forum-4.1.x-SNAPSHOT.jar to $EXO_TOMCAT/lib/";
-	cp $TOOL_HOME/libs/injection-forum-4.1.x-SNAPSHOT.jar $EXO_TOMCAT/lib/
+	INFO "copy $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar to $EXO_TOMCAT/lib/";
+	cp $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/
 }
 
 function sendtoplftomcat() {
@@ -267,10 +335,20 @@ function mvninstall(){
 	debug="";
 	other="";
 	command_="mvn clean install";
-	if [ $(containText "tomcat" "$PWD") == "OK" ]; then 
-		isTomcat="-Dskip-archive";
-		callback=" && sendinject";
+	if [ $(containText "tomcat" "$PWD") == "OK" ]; then
+    CRBR_=$(currentBranch);
+    eval "setTomcatDir $CRBR_";
+    command_="mvn install";
+		isTomcat="-Dskip-archive -T2C";
+		callback=" && setTomcatDir $CRBR_ && sendinject";
 		test="";
+    if [ "$SET_DIR" == "OK" ]; then
+      irm "$EXO_TOMCAT_DIR/lib/*";
+      irm "$EXO_TOMCAT_DIR/webapps/*";
+      irm "$EXO_TOMCAT_DIR/logs/*";
+      irm "$EXO_TOMCAT_DIR/work/*";
+      irm "$EXO_TOMCAT_DIR/temp/*";
+    fi
 	fi
 
 	if [ $(containText "commons-extension-webapp" "$PWD") == "OK" ]; then 
@@ -352,7 +430,7 @@ function ball() {
 	if [ -n "$1" ]; then
 		cm="$1";
 	fi
-	INFO "cmprojectall 'c$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";
+	INFO "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";
 	eval "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";	
 }
 
@@ -373,6 +451,23 @@ _gitdiff() {
 
 complete -F "_gitdiff" -o "default" "gitdiff"
 
+
+_runbysql() {
+	local cur="${COMP_WORDS[COMP_CWORD]}";
+  local opts="--user=root --pass=root --db-jcr=plf_mic_jcr --db-idm=plf_mic_idm --help -h --rm -r ${COMPREPLY[@]}";
+  # Array variable storing the possible completions.
+  COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+complete -F "_runbysql" -o "default" "runbysql"
+
+
 function A() {
   mkdir "$1" && cd "$1" && echo '' > "$1.sh" && gedit "$1.sh";
 }
+
+function killapp() {
+  #eval "killall -15 $1";
+  kill -9 `ps aux | grep "$1" | grep 'Sl' | awk '{print $2}'`;
+}
+
+

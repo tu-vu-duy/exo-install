@@ -134,10 +134,13 @@ function injection_server() {
 function injection() {
   users="0";
   category="0";
+  toCate="0";
   forum="0";
+  toForum="0"
   topic="0";
+  toTopic="0";
   post="0";
-  from="1";
+  fromUser="1";
   to="1";
   rest="rest";
   login="";
@@ -149,7 +152,7 @@ function injection() {
     fi
   done
   delta=$(($to - $from + 1));
-  INFO "users=$users category=$(($category*delta)) forum=$forum topic=$(($topic*delta)) post=$(($post*delta)) rest=$rest";
+  INFO "users=$users category=$category forum=$forum toCate=$toCate topic=$(($topic*delta)) toForum=$toForum post=$(($post*delta)) toTopic=$toTopic rest=$rest";
   
   nU=`getN $users`;
   users=`getNumber $users`;
@@ -170,20 +173,30 @@ function injection() {
 		login="-u $login";
 	fi
 
-  echo "forumInject $login -t forumProfile -n $nU -r $rest -p  'number=$users&prefix=user'" && 
-  eval "forumInject $login -t forumProfile -n $nU -r $rest -p  'number=$users&prefix=user'" && sleep 2s &&
+  if [ ! "$users" == "0" ]; then
+    echo "forumInject $login -t forumProfile -n $nU -r $rest -p  'number=$users&prefix=user'" && 
+    eval "forumInject $login -t forumProfile -n $nU -r $rest -p  'number=$users&prefix=user'" && sleep 2s
+  fi
 
-  echo "forumInject $login -t forumCategory -n $nC -r $rest -p  'number=$category&fromUser=$from&toUser=$to&userPrefix=user&catPrefix=cate_inject'" && 
-  eval "forumInject $login -t forumCategory -n $nC -r $rest -p  'number=$category&fromUser=$from&toUser=$to&userPrefix=user&catPrefix=cate_inject'" && sleep 2s &&
-  
-  echo "forumInject $login -t forumForum -n $nF -r $rest -p  'number=$forum&toCat=1&catPrefix=cate_inject&forumPrefix=forum_inject'" &&
-  eval "forumInject $login -t forumForum -n $nF -r $rest -p  'number=$forum&toCat=1&catPrefix=cate_inject&forumPrefix=forum_inject'" && sleep 2s &&
-  
-  echo "forumInject $login -t forumTopic -n $nT -r $rest -p  'number=$topic&topicPrefix=topic_inject&fromUser=$from&toUser=$to&userPrefix=user&toForum=1&forumPrefix=forum_inject'" &&
-  eval "forumInject $login -t forumTopic -n $nT -r $rest -p  'number=$topic&topicPrefix=topic_inject&fromUser=$from&toUser=$to&userPrefix=user&toForum=1&forumPrefix=forum_inject'" && sleep 2s &&
-  
-  echo "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=1&topicPrefix=topic_inject'" &&
-  eval "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=1&topicPrefix=topic_inject'";
+  if [ ! "$category" == "0" ]; then
+    echo "forumInject $login -t forumCategory -n $nC -r $rest -p  'number=$category&fromUser=$from&toUser=$to&userPrefix=user&catPrefix=cate_inject'" && 
+    eval "forumInject $login -t forumCategory -n $nC -r $rest -p  'number=$category&fromUser=$from&toUser=$to&userPrefix=user&catPrefix=cate_inject'" && sleep 2s
+  fi
+
+  if [ ! "$forum" == "0" ]; then  
+    echo "forumInject $login -t forumForum -n $nF -r $rest -p  'number=$forum&toCat=$toCate&catPrefix=cate_inject&forumPrefix=forum_inject'" &&
+    eval "forumInject $login -t forumForum -n $nF -r $rest -p  'number=$forum&toCat=$toCate&catPrefix=cate_inject&forumPrefix=forum_inject'" && sleep 2s
+  fi
+
+  if [ ! "$topic" == "0" ]; then  
+    echo "forumInject $login -t forumTopic -n $nT -r $rest -p  'number=$topic&topicPrefix=topic_inject&fromUser=$from&toUser=$to&userPrefix=user&toForum=$toForum&forumPrefix=forum_inject'" &&
+    eval "forumInject $login -t forumTopic -n $nT -r $rest -p  'number=$topic&topicPrefix=topic_inject&fromUser=$from&toUser=$to&userPrefix=user&toForum=$toForum&forumPrefix=forum_inject'" && sleep 2s
+  fi
+
+  if [ ! "$post" == "0" ]; then  
+    echo "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=$toTopic&topicPrefix=topic_inject'" &&
+    eval "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=$toTopic&topicPrefix=topic_inject'";
+  fi
   INFO "The end all.....";
 }
 
@@ -253,6 +266,7 @@ function injection_user() {
 	rest="rest";
 	login="";
 	type="n";
+  prefix="user";
 	for arg  in "$@" 
   do
     x=`expr index "$arg" "="`;
@@ -272,17 +286,161 @@ function injection_user() {
   	echo "forumInject $login -t userInject -r $rest -p 'users=$users&type=$type'"; 
   	eval "forumInject $login -t userInject -r $rest -p 'users=$users&type=$type'"
   else
-  	echo "forumInject $login -t forumProfile -r $rest -p 'number=$users&prefix=user'"; 
-  	eval "forumInject $login -t forumProfile -r $rest -p 'number=$users&prefix=user'";
+  	echo "forumInject $login -t forumProfile -r $rest -p 'number=$users&prefix=$prefix'"; 
+  	eval "forumInject $login -t forumProfile -r $rest -p 'number=$users&prefix=$prefix'";
   fi 
   
-} 
+}
+
+##################### NEW #######################################
+injection_help() {
+  INFO " ALL COMMANDS ";
+  INFO "injection_user users=10 prefix=user";
+  INFO "injection category=1 forum=1 toCate=0 topic=1 toForum=1 post=1 toTopic=0 users=0 from=10 to=20";
+  INFO 'injection_cate numberCate=$1';
+  INFO 'injection_forum numberForum=$1 fromCate=$2 toCate=$3';
+  INFO 'injection_topic numberTopic=$1 maxUser=$2 fromForum=$3 toForum=$4 fromUser=$5';
+  INFO 'injection_post numberPost=$1 maxUser=$2 fromTopic=$3 toTopic=$4 fromUser=$5';
+  INFO '';
+  
+}
+
+# injection_cate numberCate=$1
+CATE="0";
+function injection_cate() {
+  CATE=$1;
+  if [ -n "$CATE" ]; then
+    INFO "injection category=$CATE forum=0 toCate=0 topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+    eval "injection category=$CATE forum=0 toCate=0 topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+  fi
+}
+
+# injection_forum numberForum=$1 fromCate=$2 toCate=$3
+FORUM="0";
+function injection_forum() {
+  FORUM=$1;
+  from=0;
+  to=$CATE;
+  N_FOR=0;
+  if [ -n "$2" ]; then
+    from=$2;
+  fi
+  if [ -n "$3" ]; then
+    to=$3;
+  fi 
+  INFO "injection_forum numberForum=$FORUM fromCate=$from toCate=$to"
+  if [ -n "$FORUM" ]; then
+    for ((i=$from; i < $to ; i++))
+      do
+      INFO "injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+      #B_N=$N_FOR;
+      #N_FOR=$((FORUM * (i + 1)));
+      #INFO "From $B_N to $N_FOR";
+      eval "injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+    done
+  fi
+}
+
+
+# injection_topic numberTopic=$1 maxUser=$2 fromForum=$3 toForum=$4 fromUser=$5
+TOPIC="0";
+function injection_topic() {
+  TOPIC=$1;
+  M_User=$2;
+  N_TOP=0;
+  F_U=0;
+  to=$TOPIC;
+
+  if [ -n "$5" ]; then
+    F_U=$5;
+    to=$((TOPIC + F_U));
+  fi
+
+  from=$F_U;
+  
+  FR=0;
+  TO=$N_FOR;
+
+  if [ -n "$3" ]; then 
+    FR=$3;
+  fi
+  if [ -n "$4" ]; then 
+    TO=$4;
+  fi
+  
+  if [ -n "$TOPIC" ]; then
+    for ((i=$FR; i < $TO ; i++))
+      do
+      INFO "injection category=0 forum=0 toCate=0 topic=1 toForum=$i post=0 toTopic=0 users=0 from=$from to=$to";
+      eval "injection category=0 forum=0 toCate=0 topic=1 toForum=$i post=0 toTopic=0 users=0 from=$from to=$to";
+      from=$((to + 1));
+      to=$((from + TOPIC));
+      
+      B_N=$N_TOP;
+      N_TOP=$((TOPIC * (i + 1)));
+      INFO "From $B_N to $N_TOP";
+      if [ -n "$M_User" ] && [ "$((to > M_User))" == "1" ]; then
+        from=$F_U;
+        to=$((from + TOPIC));
+      fi
+    done
+  
+  fi
+}
+
+
+# injection_post numberPost=$1 maxUser=$2 fromTopic=$3 toTopic=$4 fromUser=$5
+POST=0;
+function injection_post() {
+  POST=$1;
+  M_User=$2;
+  N_POST=0;
+  to=$POST;
+  F_U=0;
+  if [ -n "$5" ]; then
+    F_U=$5;
+    to=$((POST + F_U));
+  fi
+  from=$F_U;
+
+  FR=0;
+  TO=$N_TOP;
+
+  if [ -n "$3" ]; then 
+    FR=$3;
+  fi
+  if [ -n "$4" ]; then 
+    TO=$4;
+  fi
+
+  if [ -n "$POST" ]; then
+    for ((i=$FR; i < $TO; i++))
+      do
+      INFO "injection category=0 forum=0 toCate=0 topic=0 toForum=0 post=1 toTopic=$i users=0 from=$from to=$to";
+      eval "injection category=0 forum=0 toCate=0 topic=0 toForum=0 post=1 toTopic=$i users=0 from=$from to=$to";
+      from=$((to + 1));
+      to=$((from + POST));
+
+      B_N=$N_POST;
+      N_POST=$((POST * (i + 1)));
+      INFO "From $B_N to $N_POST";
+      if [ -n "$M_User" ] && [ "$((to > M_User))" == "1" ]; then
+        from=$F_U;
+        to=$((from + POST));
+      fi
+    done
+    INFO "All posts: $N_POST"
+  fi
+}
+
+
+##################### END NEW #######################################
 
 _injection ()  
 {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   # The params
-  local opts="users=10 category=5 forum=10 topic=10 post=20 from=1 to=2 rest=rest login=root:gtn"
+  local opts="users=10 category=5 forum=10 toCate=0 topic=10 toForum=0 post=20 toTopic=0 from=1 to=2 rest=rest login=root:gtn"
   # Array variable storing the possible completions.
   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
 }

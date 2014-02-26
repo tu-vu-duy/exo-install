@@ -59,7 +59,7 @@ function installeXo() {
 	sudo apt-get install mysql-server mysql-client;
 	sudo apt-get install mysql-workbench;
 	sudo apt-get install mysql-query-browser;
-	# sudo apt-get install jenkins;
+	sudo apt-get install emma;
   sudo sh -c 'echo "deb http://apt.insynchq.com/ubuntu $(lsb_release -sc) non-free" >> /etc/apt/sources.list.d/insync.list'
   sudo apt-get update 
   sudo apt-get install insync-beta-ubuntu
@@ -110,6 +110,7 @@ function installApp() {
 	sudo apt-fast install mysql-server mysql-client;
 	sudo apt-fast install mysql-workbench;
 	sudo apt-fast install mysql-query-browser;
+  sudo apt-fast install emma;
 	# sudo apt-fast install jenkins;
 	installss;
 }
@@ -224,7 +225,6 @@ function findgrep() {
 
     for X in "${finds[@]}"; do
       if [ -n "$X" ]; then 
-      INFO "$X";
         if [ -n "$3" ]; then 
           grep --color=always  "$key" "$X" > '$3';
         else
@@ -326,25 +326,6 @@ function createGit() {
 function gedit() {
 	eval "geany $* &";
 }
-
-patchDiff="/tmp/my/tmp.patch";
-function gitdiff() {
-  git diff $*  > $patchDiff && sleep 2s && gedit $patchDiff;
-}
-
-
-if [ ! -e /tmp/my ]; then
-	eval "mkdir -p -m 777 /tmp/my";
-fi
-
-PDate="$(date -u +%Y-%m-%d)";
-
-if [ ! -e /tmp/my/$PDate.my ]; then
-	eval "rm -rf /tmp/my/*";
-	eval "echo '$PDate' > /tmp/my/$PDate.my";
-	eval "source ~/screenwatch.sh &";
-fi
-
 
 function gitpull () {
 	if [ -n "$1" ]; then
