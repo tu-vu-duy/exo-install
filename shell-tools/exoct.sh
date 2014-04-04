@@ -469,8 +469,21 @@ function setTomcatDir() {
        eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT";
     elif [ $(containText "infinispan" "$1") == "OK" ]; then
        eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT";
-    elif [ $(containText "4.1.0" "$1") == "OK" ]; then
-       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/4.1.0-SNAPSHOT/4.1.0-SNAPSHOT";
+    elif [ $(containText "4.1.0" "$1") == "OK" ] || [ $(containText "master" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.0-SNAPSHOT/platform-4.1.0-SNAPSHOT";
+    else
+       CR=$PWD;
+       br=`currentBranch`;
+       if [ "$br" == "master" ]; then
+         eval "setTomcatDir $br";
+       else
+         br=${br/*\//};
+         cd $EXO_TOMCAT_BUILD;
+         br=`find -maxdepth 3 -mindepth 3 -type d -name "*$br*"`;
+         br=${br/.\//};
+         eval "setTomcatDir $EXO_TOMCAT_BUILD/$br";
+       fi
+       cd $CR;
     fi
   fi
 }

@@ -57,7 +57,7 @@ function cmprojectall() {
 
 echo "Function support: makefeature 'feature-name' 'projects', checkoutFeature 'feature-name', eclipseAll, buildAll, changeVersion 'new-version' ";
 
-function makefeature() {
+function newfeature() {
 	feature="$1";
 	projects="($2)";
 	pwd_=$PWD;
@@ -70,14 +70,33 @@ function makefeature() {
 	eval "pros=$projects"
 	 for X in ${pros[@]}
 		do
-			cd $feature;
+			cd "$EXO_PROJECTS_SRC/$feature";
 			INFO "git clone git@github.com:exodev/${X}.git";
-			eval "git clone git@github.com:exodev/${X}.git && cd ${X} && git co feature/$feature origin/feature/$feature";
+			eval "git clone git@github.com:exodev/${X}.git";
 			sleep 1s;
 	 done
-	cd $feature;
+	cd "$EXO_PROJECTS_SRC/$feature";
 	eval "git clone git@github.com:tu-vu-duy/platform-tomcat-standalone.git";
 	eval "git clone git@github.com:exoplatform/platform-private-distributions.git";
+  cd $pwd_;
+}
+
+function addremote() {
+	remote="$1";
+	projects="($2)";
+	pwd_=$PWD;
+	
+	cd $EXO_PROJECTS_SRC/exodev
+
+	eval "pros=$projects"
+	 for X in ${pros[@]}
+		do
+			cd "$EXO_PROJECTS_SRC/exodev/${X}";
+			INFO "git remote add $remote git@github.com:exoplatform/${X}.git";
+			eval "git remote add $remote git@github.com:exoplatform/${X}.git";
+			sleep 1s;
+	 done
+
   cd $pwd_;
 }
 

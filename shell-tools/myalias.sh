@@ -163,9 +163,26 @@ alias gitlog='git log > /tmp/temp.log && sleep 1 && gedit /tmp/temp.log &';
 alias gitconf="gedit .git/config";
 alias cdmygit="cd mygit/";
 
-patchDiff="/tmp/my/tmp.patch";
+patchDiff="/tmp/my";
 function gitdiff() {
-  git diff $*  > $patchDiff && sleep 2s && gedit $patchDiff;
+  other="";
+  JIRA_NUMBER="";
+  for arg  in "$@" 
+    do
+    if [ $(containText "-" "$arg") == "OK" ]; then
+      JIRA_NUMBER=$arg;
+    else 
+      other="$other $arg";
+    fi
+  done
+  
+  if [ ! -n "$JIRA_NUMBER" ]; then
+    br=`currentBranch`;
+    JIRA_NUMBER=${br/*\//};
+  fi
+  file_name="$patchDiff/$(date -u +%Y%m%d)-$JIRA_NUMBER.patch";
+  INFO "git diff $other > $file_name && sleep 1s && gedit $file_name";
+  git diff $other > $file_name && sleep 1s && gedit $file_name;
 }
 
 if [ ! -e /tmp/my ]; then
@@ -180,6 +197,7 @@ if [ ! -e /tmp/my/$PDate.my ]; then
 	#eval "insync-kde &"
 	FIRST="true";
   echo "$TOOL_HOME";
+  eval "rm -rf $HOME/.local/share/Trash/files/* $HOME/.local/share/Trash/info/* $HOME/.goutputstream* &";
 fi
 
 
@@ -289,16 +307,26 @@ function updateStyle() {
     y="$(expr match "$temp" '.*\(/\)')";
     if [ "$y" == "" ]; then
       folder="${temp/.war/}"
-      INFO "Remove old folder $folder/skin"
-      rm -rf $tcDir/webapps/$folder/skin/*
-      INFO "Copy files ${cssdirfolder}${folder}/skin into $tcDir/webapps/$folder/"
-      eval "cp -rf ${cssdirfolder}${folder}/skin $tcDir/webapps/$folder/"
-
-      INFO "Copy files ${dirfolder}/templates into $tcDir/webapps/$folder/"
-      eval "cp -rf ${dirfolder}/templates $tcDir/webapps/$folder/"
-
-      INFO "Copy files ${dirfolder}/javascript into $tcDir/webapps/$folder/"
-      eval "cp -rf ${dirfolder}/javascript $tcDir/webapps/$folder/"
+      if [ -e "$tcDir/webapps/$folder/skin" ]; then
+        INFO "Remove old folder $folder/skin"
+        rm -rf $tcDir/webapps/$folder/skin/*
+      fi
+      if [ -e "${cssdirfolder}${folder}/skin" ]; then
+        INFO "Copy files ${cssdirfolder}${folder}/skin into $tcDir/webapps/$folder/"
+        eval "cp -rf ${cssdirfolder}${folder}/skin $tcDir/webapps/$folder/"
+      fi
+      if [ -e "${dirfolder}/templates" ]; then
+        INFO "Copy files ${dirfolder}/templates into $tcDir/webapps/$folder/"
+        eval "cp -rf ${dirfolder}/templates $tcDir/webapps/$folder/"
+      fi
+      if [ -e "${dirfolder}/groovy" ]; then
+        INFO "Copy files ${dirfolder}/groovy into $tcDir/webapps/$folder/"
+        eval "cp -rf ${dirfolder}/groovy $tcDir/webapps/$folder/"      
+      fi
+      if [ -e "${dirfolder}/javascript" ]; then      
+        INFO "Copy files ${dirfolder}/javascript into $tcDir/webapps/$folder/"
+        eval "cp -rf ${dirfolder}/javascript $tcDir/webapps/$folder/"
+      fi
     fi
    done
 }
@@ -337,10 +365,18 @@ function mvninstall(){
 	command_="mvn clean install";
 	if [ $(containText "tomcat" "$PWD") == "OK" ]; then
     CRBR_=$(currentBranch);
-    eval "setTomcatDir $CRBR_";
+    CRBR_=${CRBR_/*\//};
+    finder=$(find -maxdepth 3 -mindepth 3 -type d -name "*$CRBR_*");
+    tomcat="setTomcatDir $CRBR_";
+    if [ -n "$finder" ]; then
+      echo "$finder";
+      CRBR_=${finder/.\//};
+      tomcat="setTomcatDir $EXO_TOMCAT_BUILD/$CRBR_";
+    fi
+    eval "$tomcat";
     command_="mvn install";
 		isTomcat="-Dskip-archive -T2C";
-		callback=" && setTomcatDir $CRBR_ && sendinject";
+		callback=" && $tomcat && sendinject";
 		test="";
     if [ "$SET_DIR" == "OK" ]; then
       irm "$EXO_TOMCAT_DIR/lib/*";
@@ -470,4 +506,15 @@ function killapp() {
   kill -9 `ps aux | grep "$1" | grep 'Sl' | awk '{print $2}'`;
 }
 
+function gitfilediff() {
+  local version=$*;
+  if [ ! -n "$version" ]; then
+    version="HEAD~1";
+  fi
+  INFO "git diff $version | grep 'diff --git' | awk '{print \$3}'"
+  eval "git diff $version | grep 'diff --git' | awk '{print \$3}'"
+}
 
+complete -F "_gitdiff" -o "default" "gitfilediff"
+
+alias resource="source $HOME/.bashrc"
