@@ -169,7 +169,7 @@ function gitdiff() {
   JIRA_NUMBER="";
   for arg  in "$@" 
     do
-    if [ $(containText "-" "$arg") == "OK" ]; then
+    if [ $(containText "-" "$arg") == "OK" ] && [ $(containText "/" "$arg") == "NOK" ]; then
       JIRA_NUMBER=$arg;
     else 
       other="$other $arg";
@@ -266,8 +266,14 @@ alias gitlg="git lg";
 
 function tomcatinject() {
 	getTomcatDir;
-	INFO "copy $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar to $EXO_TOMCAT/lib/";
-	cp $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/
+  if [ -e "$TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar" ]; then
+    INFO "cp $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+    cp "$TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar" "$EXO_TOMCAT/lib/"
+  fi
+  if [ -e "$TOOL_HOME/libs/social-extras-injection-4.1.0-SNAPSHOT.jar" ]; then
+    INFO "cp $TOOL_HOME/libs/social-extras-injection-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+    cp "$TOOL_HOME/libs/social-extras-injection-4.1.0-SNAPSHOT.jar" "$EXO_TOMCAT/lib/"
+  fi
 }
 
 function sendtoplftomcat() {
@@ -337,6 +343,7 @@ function sendinject() {
 		INFO "Run tomcatinject...";
 		eval "tomcatinject";
 		INFO "cp $TOOL_HOME/configuration.properties $EXO_TOMCAT/gatein/conf/";
+    mv $EXO_TOMCAT/gatein/conf/configuration.properties $EXO_TOMCAT/gatein/conf/configuration_b.properties
 		cp "$TOOL_HOME/configuration.properties" "$EXO_TOMCAT/gatein/conf/"
 		
 		if [ -e "$TOOL_HOME/libs/crash.war" ]; then
@@ -458,7 +465,7 @@ function mvntest() {
   done
 }
 
-PROJECTS="commons/ social/ forum/ platform/ integration/"
+PROJECTS="commons/ social/ wiki/ calendar/ forum/ platform/ integration/"
 
 function ball() {
 	cm="feature/stabilization";
@@ -518,3 +525,5 @@ function gitfilediff() {
 complete -F "_gitdiff" -o "default" "gitfilediff"
 
 alias resource="source $HOME/.bashrc"
+
+ALL_PROJECT="gatein/ platform-ui/ commons/ social/ ecms/ wiki/ forum/ calendar/ platform/ integration/ platform-public-distributions/ platform-private-distributions/";

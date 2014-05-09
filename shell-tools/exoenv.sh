@@ -32,7 +32,7 @@ if [ ! -e $M2_HOME ]; then
   M2_HOME=$PWD;
   cd $JAVA_DIR;
 fi
-#mvn -Dmaven.repo.local=$HOME/.my/other/repository clean install
+
 M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository, http://repository.exoplatform.org/nexus/content/groups/all, http://repo1.maven.org/maven2"
 MAVEN_OPTS="-Xshare:auto -Xms1G -Xmx2G -XX:MaxPermSize=256m" 
 T2C="";
