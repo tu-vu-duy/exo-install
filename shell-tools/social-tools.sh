@@ -81,6 +81,16 @@ function newfeature() {
   cd $pwd_;
 }
 
+function mutilcm() {
+for arg  in "$@"
+  do
+		if [ $(hasfc $arg) == "Found" ]; then
+		  INFO "Run command: $arg";
+      eval "$arg"
+    fi
+	done
+}
+
 function addremote() {
 	remote="$1";
 	projects="($2)";

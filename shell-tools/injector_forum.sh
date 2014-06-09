@@ -142,6 +142,13 @@ function injection() {
   post="0";
   fromUser="1";
   to="1";
+  
+  space="0";
+  membership="0";
+  activity="0";
+  mentioner="0";
+  relationship="0";
+  
   rest="rest";
   login="";
   for arg  in "$@" 
@@ -197,6 +204,8 @@ function injection() {
     echo "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=$toTopic&topicPrefix=topic_inject'" &&
     eval "forumInject $login -t forumPost -n $nP -r $rest -p  'number=$post&postPrefix=post_inject&fromUser=$from&toUser=$to&userPrefix=user&toTopic=$toTopic&topicPrefix=topic_inject'";
   fi
+  
+  
   INFO "The end all.....";
 }
 
@@ -292,6 +301,10 @@ function injection_user() {
   
 }
 
+function injection_identity() {
+  eval "injection_user $*"
+}
+
 ##################### NEW #######################################
 injection_help() {
   INFO " ALL COMMANDS ";
@@ -329,18 +342,23 @@ function injection_forum() {
     to=$3;
   fi 
   INFO "injection_forum numberForum=$FORUM fromCate=$from toCate=$to"
+  cm="echo ''";
   if [ -n "$FORUM" ]; then
     for ((i=$from; i < $to ; i++))
       do
-      INFO "injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
-      #B_N=$N_FOR;
-      #N_FOR=$((FORUM * (i + 1)));
+      #INFO "injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+      B_N=$N_FOR;
+      N_FOR=$((FORUM * (i + 1)));
       #INFO "From $B_N to $N_FOR";
-      eval "injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
+      cm="$cm && injection category=0 forum=$FORUM toCate=$i topic=0 toForum=0 post=0 toTopic=0 users=0 from=0 to=0";
     done
+    INFO "$cm";
+    eval "$cm";
   fi
 }
-
+function defaultForumData() {
+  eval "injection_user 'users=demo,mary,john' && injection_user 'users=21' && injection_cate '5' && injection_forum 5 0 5 && injection_topic 10 20 0 10 0 && injection_post 10 20 0 30 0";
+}
 
 # injection_topic numberTopic=$1 maxUser=$2 fromForum=$3 toForum=$4 fromUser=$5
 TOPIC="0";

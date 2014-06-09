@@ -369,6 +369,7 @@ function mvninstall(){
 	test="-Dmaven.test.skip=true";
 	debug="";
 	other="";
+  pPrivate="-Pexo-private";
 	command_="mvn clean install";
 	if [ $(containText "tomcat" "$PWD") == "OK" ]; then
     CRBR_=$(currentBranch);
@@ -417,6 +418,8 @@ function mvninstall(){
 				command_="mvn clean";
 		 elif [ $(containText "class=" "$arg") == "OK" ]; then 
 				test=" -Dtest=${arg/class=/}";
+     elif [ $(containText "-o" "$arg") == "OK" ]; then 
+				pPrivate="$arg";
 		 else 
 				other="$other $arg";
 		 fi
@@ -424,8 +427,8 @@ function mvninstall(){
    done
 
 
-	INFO "$command_ $isTomcat $test$debug -Pexo-private $T2C $other $callback";
-  eval "$command_ $isTomcat $test$debug -Pexo-private $T2C $other $callback";
+	INFO "$command_ $isTomcat $test$debug $pPrivate $T2C $other $callback";
+  eval "$command_ $isTomcat $test$debug $pPrivate $T2C $other $callback";
 }
 
 function buildSkin() {
@@ -527,3 +530,20 @@ complete -F "_gitdiff" -o "default" "gitfilediff"
 alias resource="source $HOME/.bashrc"
 
 ALL_PROJECT="gatein/ platform-ui/ commons/ social/ ecms/ wiki/ forum/ calendar/ platform/ integration/ platform-public-distributions/ platform-private-distributions/";
+
+function gitloggrep() {
+  local vs="-200";
+  if [ -n "$2" ]; then
+    vs="$2";
+  fi
+
+  if [ -n "$1" ]; then
+    eval "git lg $vs | grep '$1'";
+  else
+    INFO "Syntax: gitloggrep 'key-word' 'number-version'";
+  fi
+}
+
+function tomcatbuildall() {
+  eval "cmprojectall '$*' 'tomcatbuild -o'";
+}

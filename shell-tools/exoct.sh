@@ -342,7 +342,12 @@ function CD() {
         eval "cdSource $arg"
        fi
      fi
-  done 
+  done
+  if [ $(containText "tomcat-standalone" "$PWD") == "OK" ]; then
+    eval "plfprompt";
+  else
+    eval "newprompt";
+  fi
 }
 
 function  killTomcat() {
@@ -490,9 +495,7 @@ function setTomcatDir() {
 
 function cdtomcat() {
 	getTomcatDir;
-	plfprompt;
   cd $EXO_TOMCAT_DIR
-  
 }
 
 function optomcat() {
