@@ -351,6 +351,7 @@ function CD() {
 }
 
 function  killTomcat() {
+  currentTomcat;
   tomcatServerId="";
   if [ "$cygwin" == "true" ]; then
     tomcatServerId=`ps af | grep java | awk '{print $1}'`
@@ -365,6 +366,17 @@ function  killTomcat() {
   else
   	INFO "Currently, The tomcat have not running.";
   fi 
+}
+
+function currentTomcat() {
+  local TCDIR=`ps aux | grep 'Dgatein.conf.dir' | sed -e 's/.*Dgatein.conf.dir=//g' | awk '{print $1}'` 
+  TC_DIR=`echo $TCDIR | awk '{print $1}'`;
+  if [ -e "$TC_DIR" ]; then
+     EXO_TOMCAT="${TC_DIR/\/gatein\/conf/}";
+     echo "EXO_TOMCAT_DIR=$EXO_TOMCAT;  EXO_TOMCAT=$EXO_TOMCAT; export EXO_TOMCAT EXO_TOMCAT_DIR;" > "/tmp/my/tomcatdir.sh";
+  elif [ ! -n "$EXO_TOMCAT" ]; then
+    setTomcatDir;
+  fi
 }
 
 alias cd="CD";
@@ -389,8 +401,8 @@ function runtomcat() {
 
   if [ -n "$project" ]; then
     eval "setTomcatDir $project";
-  else 
-    eval "getTomcatDir";
+  elif [ ! -e "$EXO_TOMCAT" ]; then
+    eval "setTomcatDir && getTomcatDir";
   fi
 
   OPWD="$PWD"
@@ -438,13 +450,15 @@ function runByParam() {
 function getTomcatDir() {
   if [ -e "/tmp/my/tomcatdir.sh" ]; then 
     eval "command source /tmp/my/tomcatdir.sh";
+  else
+    currentTomcat;
   fi
 
 	if [ ! -e "$EXO_TOMCAT" ] || [ $(containText "target" "$EXO_TOMCAT") == "NOK" ]; then
 		local OLPWD=$PWD;
 		local X="$EXO_TOMCAT_CONF";
 		cd "$X";
-		X=`find -maxdepth 5 -name 'catalina.sh' | sed -e 's/bin.*//'`;
+		X=`find -maxdepth 5 -type f -name 'catalina.sh' | sed -e 's/bin.*//'`;
     X=`echo $X | awk '{print $1}'`;
 		X=${X/\.\//};
 		cd "$X";
@@ -465,7 +479,6 @@ function setTomcatDir() {
 		export EXO_TOMCAT EXO_TOMCAT_DIR;
   elif [ $(containText "home/" "$1") == "NOK" ]; then
     rm -rf /tmp/my/tomcatdir.sh;
-    #EXO_TOMCAT_BUILD=`echo $EXO_TOMCAT_CONF | sed -e 's/\/targ.*//'`;
     if [ $(containText "4.0.x" "$1") == "OK" ]; then
        eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.0.x-SNAPSHOT/platform-4.0.x-SNAPSHOT";
     elif [ $(containText "stabilization" "$1") == "OK" ] || [ $(containText "4.1.x" "$1") == "OK" ]; then
@@ -478,15 +491,24 @@ function setTomcatDir() {
        eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.0-SNAPSHOT/platform-4.1.0-SNAPSHOT";
     else
        CR=$PWD;
-       br=`currentBranch`;
+       local br="";
+       if [ -e "$PWD/.git" ]; then
+         br=`currentBranch`;
+       fi
+       if [ ! -n "$br" ]; then
+         cd $EXO_TOMCAT_BUILD;
+         br=`currentBranch`;
+       fi
        if [ "$br" == "master" ]; then
          eval "setTomcatDir $br";
-       else
-         br=${br/*\//};
+       elif [ -n "$br" ]; then
          cd $EXO_TOMCAT_BUILD;
+         br=${br/*\//};
          br=`find -maxdepth 3 -mindepth 3 -type d -name "*$br*"`;
          br=${br/.\//};
-         eval "setTomcatDir $EXO_TOMCAT_BUILD/$br";
+         if [ -e "$EXO_TOMCAT_BUILD/$br" ]; then
+           eval "setTomcatDir $EXO_TOMCAT_BUILD/$br";
+         fi
        fi
        cd $CR;
     fi
@@ -541,6 +563,7 @@ function tcstart() {
   if [ -e "$EXO_TOMCAT_DIR/run_eXo.sh" ]; then
   	sed -i -e 's/\".\/bin\/catalina.sh/\/\"bin\/catalina.sh/g' $EXO_TOMCAT_DIR/run_eXo.sh;
   	INFO "Run tomcat $isdb in $EXO_TOMCAT_DIR";
+    echo "EXO_TOMCAT_DIR=$EXO_TOMCAT_DIR;  EXO_TOMCAT=$EXO_TOMCAT; export EXO_TOMCAT EXO_TOMCAT_DIR;" > "/tmp/my/tomcatdir.sh";
     eval "sleep 1s && $EXO_TOMCAT_DIR/run_eXo.sh $debug" 
   elif [ -e "$EXO_TOMCAT_DIR/start_eXo.sh" ]; then
     local X=" $profile_";
@@ -550,6 +573,7 @@ function tcstart() {
     profile_="";
     sed -i -e 's/\".\/bin\/catalina.sh/\/\"bin\/catalina.sh/g' $EXO_TOMCAT_DIR/start_eXo.sh;
     INFO "Run tomcat $isdb in $EXO_TOMCAT_DIR";
+    echo "EXO_TOMCAT_DIR=$EXO_TOMCAT_DIR;  EXO_TOMCAT=$EXO_TOMCAT; export EXO_TOMCAT EXO_TOMCAT_DIR;" > "/tmp/my/tomcatdir.sh";
     eval "sleep 1s && $EXO_TOMCAT_DIR/start_eXo.sh $debug" 
   elif [ ! -n "$isGetDir" ]; then
   		isGetDir="false";

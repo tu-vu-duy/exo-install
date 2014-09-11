@@ -450,6 +450,8 @@ function injection_post() {
     INFO "All posts: $N_POST"
   fi
 }
+#localhost:8080/rest/private/bench/inject/space?number=20&userPrefix=user&fromUser=0&toUser=1&spacePrefix=space_inject
+
 
 
 ##################### END NEW #######################################

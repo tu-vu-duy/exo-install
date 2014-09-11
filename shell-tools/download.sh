@@ -210,10 +210,20 @@ function getfiletypes() {
       fileType="$fileType -o -name $X";
     fi
   done 
-  echo "$fileType";
+  echo " -type f $fileType";
 }
 
 function findgrep() {
+  inp="'$1'";
+  local tp=`eval "getfiletypes $inp"`;
+  if [ -n "$tp" ]; then 
+    key="$2";
+    INFO "find $tp | xargs grep --color=always '$key'";
+    eval "find $tp | xargs grep --color=always '$key'";
+  fi
+}
+
+function findgrep_() {
   inp="'$1'";
   local tp=`eval "getfiletypes $inp"`;
   if [ -n "$tp" ]; then 

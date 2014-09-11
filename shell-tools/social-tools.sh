@@ -45,13 +45,15 @@ function cmprojectall() {
 	pros="($1)";
 	eval "pros=$pros"
 	cm=$2;
- for X in ${pros[@]}
-	do
-		INFO "$pwd_/$X $cm";
-		eval "cd $pwd_/$X && $cm;";
-		sleep 1s;
- done
-  cd $pwd_;
+	for X in ${pros[@]}
+		do
+			if [ -e "$pwd_/$X" ]; then
+				INFO "$pwd_/$X $cm";
+				eval "cd $pwd_/$X && $cm;";
+				sleep 1s;
+			fi
+	done
+	cd $pwd_;
 }
 
 

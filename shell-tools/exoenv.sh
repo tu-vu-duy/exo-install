@@ -1,6 +1,6 @@
 ##################### Working Environment ########################################
 #userever=$(whoami)
-PORTABLE_DIR=/home/$(whoami)
+PORTABLE_DIR=$HOME
 
 ##################### VARIABLE TO CUSTOMIZE ########################################
 PORTABLE_DIR=`echo $PORTABLE_DIR | sed -e 's/\\\/\\//g'`
@@ -72,3 +72,10 @@ if [ ! -e "$JAVA_DIR/apache-maven-3.1.1" ]; then
   source "$TOOL_HOME/upgrade-maven.sh";
 fi
 
+CurrentUser=$(whoami);
+if [ "$CurrentUser" == "root" ]; then
+  unset JAVA_OPTS;
+  function lnewprompt() { echo -n "";};
+  function newprompt() { echo -n "";};
+  function plfprompt() { echo -n "";};
+fi

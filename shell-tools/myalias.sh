@@ -1,4 +1,6 @@
-source "$TOOL_HOME/tools/libs.sh;"
+if [ $(whoami) != "root" ]; then
+   source "$TOOL_HOME/tools/libs.sh;"
+fi
 #source $TOOL_HOME/tools/bash_completion/bash_completion;
 source "$TOOL_HOME/download.sh";
 
@@ -94,7 +96,7 @@ function runbysql() {
        version="${argM/version=/}";
      elif [ "$arg" == "-v" ]; then
        version="$next";
-     elif [ "$arg" == "--rm" ] || [ "$arg" == "-r" ]; then
+     elif [ "$arg" == "--rm" ] || [ "$arg" == "-r" ] || [ "$arg" == "rm" ]; then
        action="rm";
      elif [ "$arg" == "--help" ] || [ "$arg" == "-h" ]; then
        INFO "The function runbysql help configuration and run PLF-tomcat width db is mysql";
@@ -120,7 +122,7 @@ function runbysql() {
       eval "setTomcatDir $version";
     fi
     getTomcatDir;
-    B=$(date +%H_%M_%d);
+    B=$(date +%H_%M_%d_%S);
     mv $EXO_TOMCAT/conf/server.xml $EXO_TOMCAT/conf/server_$B.xml;
     cp $EXO_TOMCAT/conf/server-mysql.xml $EXO_TOMCAT/conf/server.xml;
     cd $EXO_TOMCAT/conf/;
@@ -342,10 +344,16 @@ function sendinject() {
 	if [ $(expr match $EXO_TOMCAT "$PWD") -gt 0 ]; then
 		INFO "Run tomcatinject...";
 		eval "tomcatinject";
-		INFO "cp $TOOL_HOME/configuration.properties $EXO_TOMCAT/gatein/conf/";
-    mv $EXO_TOMCAT/gatein/conf/configuration.properties $EXO_TOMCAT/gatein/conf/configuration_b.properties
-		cp "$TOOL_HOME/configuration.properties" "$EXO_TOMCAT/gatein/conf/"
-		
+        if [ -e "$TOOL_HOME/exo-sample.properties" ]; then
+            INFO "cp $TOOL_HOME/exo-sample.properties $EXO_TOMCAT/gatein/conf/exo.properties";
+            if [ -e "$EXO_TOMCAT/gatein/conf/exo.properties" ]; then
+                local B=$(date +%H_%M_%d_%S);
+                mv $EXO_TOMCAT/gatein/conf/exo.properties $EXO_TOMCAT/gatein/conf/exo${B}.properties
+            fi
+            cp "$TOOL_HOME/exo-sample.properties" "$EXO_TOMCAT/gatein/conf/"
+            mv $EXO_TOMCAT/gatein/conf/exo-sample.properties $EXO_TOMCAT/gatein/conf/exo.properties
+        fi
+
 		if [ -e "$TOOL_HOME/libs/crash.war" ]; then
 			INFO "cp $TOOL_HOME/libs/crash.war $EXO_TOMCAT/webapps/";
 			cp "$TOOL_HOME/libs/crash.war" "$EXO_TOMCAT/webapps/"
@@ -354,6 +362,11 @@ function sendinject() {
 		if [ -e "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" ]; then
 			INFO "cp $TOOL_HOME/libs/mysql-connector-java-5.1.13.jar $EXO_TOMCAT/lib/";
 			cp "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" "$EXO_TOMCAT/lib/"
+		fi
+
+        if [ -e "$TOOL_HOME/libs/logback.xml" ]; then
+			INFO "cp $TOOL_HOME/libs/logback.xml $EXO_TOMCAT/conf/";
+			cp "$TOOL_HOME/libs/logback.xml" "$EXO_TOMCAT/conf/"
 		fi
 	fi
 }
@@ -392,6 +405,8 @@ function mvninstall(){
       irm "$EXO_TOMCAT_DIR/logs/*";
       irm "$EXO_TOMCAT_DIR/work/*";
       irm "$EXO_TOMCAT_DIR/temp/*";
+      local B=$(date +%H_%M_%d_%S);
+      mv $EXO_TOMCAT_DIR/conf/server.xml $EXO_TOMCAT_DIR/conf/server_$B.xml;
     fi
 	fi
 
@@ -546,4 +561,36 @@ function gitloggrep() {
 
 function tomcatbuildall() {
   eval "cmprojectall '$*' 'tomcatbuild -o'";
+}
+
+function teamblip() {
+	INFO "mvninstall -o  && killTomcat && sleep 1s";
+	eval "mvninstall -o  && killTomcat && sleep 1s";
+	INFO "setTomcatDir 'stabilization'";
+	eval "setTomcatDir 'stabilization'";
+	INFO "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+	eval "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+}
+
+function killas1() {
+  eval "kill -9 `ps aux | grep as1 | grep EXO_DEV | awk '{print $2}'`";
+}
+
+function killadmin() {
+  eval "kill -9 `ps aux | grep admin-tomcat | grep tenant.masterhost | awk '{print $2}'`";
+}
+
+function jmclass() {
+  PID="`ps aux | grep as1 | grep EXO_DEV | awk '{print $2}'`";
+  eval "jmap -histo:live $PID | grep '$*'";
+}
+
+function plflogin() {
+  URL="$3";
+  PRFIX="$2";
+  NB="$1";
+  for((i = 0; i< $NB; ++i)); 
+     do
+     eval "curl -u $PRFIX${i}:exo -s -v '$URL'";
+  done
 }
