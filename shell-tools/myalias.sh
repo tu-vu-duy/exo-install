@@ -7,6 +7,7 @@ source "$TOOL_HOME/download.sh";
 alias mdfmyalias="gedit $TOOL_HOME/myalias.sh &"
 alias opjava="nautilus $JAVA_DIR";
 CRBR="";
+UPDATE="";
 
 function gitpatch() {
       eval 'if [ $JIRA_NUMBER == "TEMP" ]; then export JIRA_NUMBER="$(date -u +%h%M)"; fi &&
@@ -20,8 +21,8 @@ function gitpdiff() {
          git diff $*> $PATCH_FILES/$(date -u +%Y%m%d)-$JIRA_NUMBER.patch'
 }
 
-alias mvneclipse="mvn eclipse:eclipse"
-alias mvnclean="mvn eclipse:clean"
+alias mvneclipse="INFO 'mvn eclipse:eclipse -T2C' && mvn eclipse:eclipse -T2C"
+alias mvnclean="INFO 'mvn eclipse:clean -o -T2C' && mvn eclipse:clean -T2C -o"
 
 alias svndiff="svn diff > tem.patch && sleep 1s && mdf tem.patch && sleep 1s && rm tem.patch";
 
@@ -381,8 +382,8 @@ function mvninstall(){
 	callback="";
 	test="-Dmaven.test.skip=true";
 	debug="";
-	other="";
-  pPrivate="-Pexo-private";
+	other="$UPDATE";
+	pPrivate="-Pexo-private";
 	command_="mvn clean install";
 	if [ $(containText "tomcat" "$PWD") == "OK" ]; then
     CRBR_=$(currentBranch);
@@ -414,7 +415,10 @@ function mvninstall(){
 		 eval "sed -i -e 's/<\/dependencies>/<\/dependencies><build><finalName>commons-extension<\/finalName><\/build>/g' $PWD/pom.xml";
 		 callback="$callback && git co pom.xml";
 	fi
-
+	if [ $(containText "commons-webui-resources" "$PWD") == "OK" ]; then 
+		 eval "sed -i -e 's/<build>/<build><finalName>CommonsResources<\/finalName>/g' $PWD/pom.xml";
+		 callback="$callback && git co pom.xml";
+	fi
 	for arg  in "$@" 
     do
      arg="${arg/--/}" 
@@ -472,8 +476,7 @@ function JDBC() {
 	grep --color=never --after-context=0 --before-context=1 'JDBC queries was executed but the maximum is' test.txt | sed -e 's/--.*//g'> ntest.txt	
 }
 
-alias bcommon='cd commons-api/ && tomcatbuild -o && cd ../ && cd commons-component-common/ && tomcatbuild -o && cd ..';
-
+alias bcommon='cd commons && cd commons-api/ && tomcatbuild && cd ../ && cd commons-component-common/ && tomcatbuild && cd ..';
 
 function mvntest() {
 	for arg  in "$@" 
@@ -594,3 +597,63 @@ function plflogin() {
      eval "curl -u $PRFIX${i}:exo -s -v '$URL'";
   done
 }
+
+function JAVA() {
+    cd $JAVA_DIR;
+}
+
+function echoTomcatdir() {
+	INFO "$EXO_TOMCAT";
+}
+
+function fakemail() {
+	if [ ! -e "$HOME/fake-mails" ]; then
+		eval "mkdir -m 777 $HOME/fake-mails"
+	fi
+	if [ -e "$TOOL_HOME/fake-mail.properties" ]; then
+		getTomcatDir;
+		INFO "cp $TOOL_HOME/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties";
+		if [ -e "$EXO_TOMCAT/gatein/conf/exo.properties" ]; then
+			local B=$(date +%H_%M_%d_%S);
+			mv $EXO_TOMCAT/gatein/conf/exo.properties $EXO_TOMCAT/gatein/conf/exo${B}.properties
+		fi
+		cp "$TOOL_HOME/fake-mail.properties" "$EXO_TOMCAT/gatein/conf/"
+		mv $EXO_TOMCAT/gatein/conf/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties
+	fi
+	
+	##
+	eval "java -jar $TOOL_HOME/libs/fakeSMTP-1.11.jar --start-server --port 3535 --output-dir $HOME/fake-mails -p 3535 &";
+}
+
+function makezip() {
+	if [ -n "$1" ]; then
+		INFO "zip -r '$1' *";
+		eval "zip -r '$1' *";
+	else 
+		INFO "makezip 'file-name.zip'";
+	fi
+}
+function bnoupadte() {
+	UPDATE=" -o ";
+}
+function bupadte() {
+	UPDATE="";
+}
+
+alias gitcherrypick="git cherry-pick "
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

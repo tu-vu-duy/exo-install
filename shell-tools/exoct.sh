@@ -108,9 +108,6 @@ function cthelp() {
   echo "==========Using command cthelp for display this help.==========="
 }
 
-EXO_KS=$EXO_PROJECTS_SRC/exodev/ks
-EXO_SOCIAL=$EXO_PROJECTS_SRC/exodev/social
-
 CRPRJ=""
 EXO_TOMCAT_DIR=$EXO_TOMCAT;
 EXO_TOMCAT_BUILD=`echo $EXO_TOMCAT_DIR | grep --color=never 'target' | sed -e 's/\/target.*//'`;
@@ -120,7 +117,7 @@ EXO_PROJECTS=(tools portal gatein social ks forum cs platform platform-ui platfo
 
 # aliass extendsion: we can define quick goto project via use function cdSource with param = {projectname}{version}
 
-alias social="cd exodev social/"
+alias social="cd social"
 alias firefoxs="firefox http://localhost:8080/ &"
 alias eclipse="$JAVA_DIR/eclipse/eclipse &"
 
@@ -128,12 +125,6 @@ alias tomcatCleanRun="tomcatClean && runtomcat"
 alias runtc="runtomcat"
 alias tcrun="runtomcat"
 
-alias svnst="svn st"
-alias svnup="svn up"
-alias svnrmall="exosvn rm"
-alias svnaddall="exosvn add"
-alias svnrvall="svn revert -R \"\""
-alias svndiff="svn diff"
 
 ALISAS_SOURCE="";
 # has function or alias: use hasfc functionname. Ex: hasfs kst
@@ -239,24 +230,16 @@ function crash() {
     else
      getCrsh
   fi
-  sleep 10s 
-  eval "telnet localhost 5000"
+  eval "sleep 10s && telnet localhost 5000"
 }
 
 function getCrsh() {
-   crdir="$JAVA_DIR/exo-dependencies/repository/org/crsh/crsh.jcr.exo/1.1.0/"
-   if [ -e "$crdir/crsh.jcr.exo-1.1.0.war" ]; then
-    cp $crdir/crsh.jcr.exo-1.1.0.war $HOME/
-    mv $HOME/crsh.jcr.exo-1.1.0.war $EXO_TOMCAT/webapps/crash.war
+   crdir="$TOOL_HOME/libs/crash.war"
+   if [ -e "$crdir" ]; then
+    cp $crdir $EXO_TOMCAT/webapps/crash.war
     chmod +x  $EXO_TOMCAT/webapps/crash.war
     INFO "getCrsh: Run crash...."
-   else
-    eval "mkdir -p -m 777 $crdir"
-    cd $crdir
-    wget "http://repository.exoplatform.org/service/local/repositories/crsh-releases/content/org/crsh/crsh.jcr.exo/1.0.0/crsh.jcr.exo-1.0.0.war"
-    cdback
-    sleep 5s 
-    getCrsh
+    crash;
    fi
 }
 
@@ -307,7 +290,8 @@ function cdSource() {
 
   OPWD=$PWD;
   cd $EXO_PROJECTS_SRC;
-	X=$PWD/`find -maxdepth 2 -type d -name "$prj" | sed -e 's/\.\///'`;
+  local pr=${prj/*\//};
+	X=$PWD/`find -maxdepth 2 -type d -name "$pr*" | sed -e 's/\.\///'`;
 	
 	if [ "$X" == "$PWD/" ];then
 			cd $OPWD;
@@ -481,14 +465,10 @@ function setTomcatDir() {
     rm -rf /tmp/my/tomcatdir.sh;
     if [ $(containText "4.0.x" "$1") == "OK" ]; then
        eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.0.x-SNAPSHOT/platform-4.0.x-SNAPSHOT";
-    elif [ $(containText "stabilization" "$1") == "OK" ] || [ $(containText "4.1.x" "$1") == "OK" ]; then
-       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-stabilization-SNAPSHOT/platform-4.1.x-pkgpriv-stabilization-SNAPSHOT";
-    elif [ $(containText "notifications" "$1") == "OK" ] || [ $(containText "social-notifications" "$1") == "OK" ]; then
-       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT/platform-4.1.x-pkgpriv-social-notifications-SNAPSHOT";
-    elif [ $(containText "infinispan" "$1") == "OK" ]; then
-       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT/platform-4.1.x-pkgpriv-infinispan-full-integ-SNAPSHOT";
+    elif [ $(containText "4.1.x" "$1") == "OK" ]; then
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.x-SNAPSHOT/platform-4.1.x-SNAPSHOT";
     elif [ $(containText "4.1.0" "$1") == "OK" ] || [ $(containText "master" "$1") == "OK" ]; then
-       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.1.0-SNAPSHOT/platform-4.1.0-SNAPSHOT";
+       eval "setTomcatDir $EXO_TOMCAT_BUILD/target/platform-4.2.x-SNAPSHOT/platform-4.2.x-SNAPSHOT";
     else
        CR=$PWD;
        local br="";

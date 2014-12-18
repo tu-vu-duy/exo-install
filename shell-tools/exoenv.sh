@@ -10,9 +10,9 @@ JAVA_DIR=$PORTABLE_DIR/java
 OLD=$PWD
 cd $JAVA_DIR
 EXO_BASE_DIRECTORY=$PWD
-JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.6"
-if [ "$jdk7" == "true" ]; then
-  JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.7"
+JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.7"
+if [ "$jdk6" == "true" ]; then
+  JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.6"
 fi
 
 BSH_EXO_BASE_DIRECTORY=$JAVA_DIR
@@ -25,10 +25,10 @@ USER_HOME='/cygdrive/c/Documents\ and\ Settings/$USERNAME'
 EXO_PROJECTS_SRC=$EXO_BASE_DIRECTORY/eXoProjects
 EXO_WORKING_DIR=$EXO_BASE_DIRECTORY/exo-working
 
-M2_HOME="$EXO_BASE_DIRECTORY/maven-3.1.1"
+M2_HOME="$EXO_BASE_DIRECTORY/apache-maven-3.2.3"
 
 if [ ! -e $M2_HOME ]; then
-  MV=`find -maxdepth 1 -type d -name '*maven*3.1*'`;
+  MV=`find -maxdepth 1 -type d -name '*maven*3.*'`;
   MV=`echo $MV | awk '{print $1}'`
   M2_HOME=$JAVA_DIR/${MV/\.\//};
   cd $M2_HOME;
@@ -68,7 +68,7 @@ eval "X=(${PWD//\// })"
 if [ -n "${X[9]}" ]; then 
   eval "plfprompt";
 fi
-if [ ! -e "$JAVA_DIR/apache-maven-3.1.1" ]; then 
+if [ $(containText "3.2" "$M2_HOME") == "NOK" ]; then
   source "$TOOL_HOME/upgrade-maven.sh";
 fi
 

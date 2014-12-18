@@ -60,12 +60,6 @@ function installeXo() {
 	sudo apt-get install mysql-workbench;
 	sudo apt-get install mysql-query-browser;
 	sudo apt-get install emma;
-  sudo sh -c 'echo "deb http://apt.insynchq.com/ubuntu $(lsb_release -sc) non-free" >> /etc/apt/sources.list.d/insync.list'
-  sudo apt-get update 
-  sudo apt-get install insync-beta-ubuntu
-  sudo apt-get install insync-beta-gnome
-  sudo apt-get install insync-beta-cinnamon
-  sudo apt-get install insync-beta-kde
 	sudo apt-get -f install;
 }
 

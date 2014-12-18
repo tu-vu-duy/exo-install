@@ -450,7 +450,74 @@ function injection_post() {
     INFO "All posts: $N_POST"
   fi
 }
+
 #localhost:8080/rest/private/bench/inject/space?number=20&userPrefix=user&fromUser=0&toUser=1&spacePrefix=space_inject
+function injection_space() {
+	for arg  in "$@" 
+	  do
+		x=`expr index "$arg" "="`;
+		if [ $x -gt 0 ]; then
+		  eval "$arg";
+		fi
+	 done
+	 eval "forumInject -t space -p 'number=$number&userPrefix=$userPrefix&fromUser=$from&toUser=$to&spacePrefix=$prefix'";
+}
+_injection_space ()  
+{
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  # The params
+  local opts="number=20 userPrefix=user from=0 to=1 spacePrefix=space_inject"
+  # Array variable storing the possible completions.
+  COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+complete -F "_injection_space" -o "default" "injection_space"
+  
+### By document
+#localhost:8080/rest/private/bench/inject/relationship?number=20&prefix=user&fromUser=0&toUser=1
+## By number on each user
+#localhost:8080/rest/private/bench/inject/relationship?number=20&prefix=user&fromUser=0&toUser=1&bynumber=true
+## By source user
+#localhost:8080/rest/private/bench/inject/relationship?number=20&srcUser=root
+function injection_relationship() {
+	number="0";
+	prefix="";
+	fromUser="0";
+	toUser="0";
+	bynumber="false";
+	srcUser="";
+	help="false";
+	for arg  in "$@" 
+	  do
+		x=`expr index "$arg" "="`;
+		if [ $x -gt 0 ]; then
+		  eval "$arg";
+		fi
+		if [ "$arg" == "-h" ] || [ "$arg" == "--help" ]; then
+		  help="true";
+		fi
+	 done
+	 if [ $help == "true" ] || [ ! -n "$1" ]; then
+		INFO "============ HELP ===========";
+		INFO " Example: number=20 srcUser=root prefix=user from=0 to=10"
+		INFO " By document"
+		INFO "localhost:8080/rest/private/bench/inject/relationship?number=20&prefix=user&fromUser=0&toUser=10"
+		INFO " By number on each user"
+		INFO "localhost:8080/rest/private/bench/inject/relationship?number=20&prefix=user&fromUser=0&toUser=1&bynumber=true"
+		INFO " By source user"
+		INFO "localhost:8080/rest/private/bench/inject/relationship?number=20&srcUser=root&prefix=user&fromUser=$from&toUser=$to"
+	 else
+		eval "forumInject -t relationship -p 'number=$number&prefix=$prefix&fromUser=$from&toUser=$to&bynumber=$bynumber&srcUser=$srcUser'";
+	 fi
+}
+_injection_relationship ()  
+{
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  # The params
+  local opts="number=20 srcUser=root prefix=user from=0 to=1 -h --help"
+  # Array variable storing the possible completions.
+  COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+complete -F "_injection_relationship" -o "default" "injection_relationship"
 
 
 

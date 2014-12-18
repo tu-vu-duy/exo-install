@@ -32,8 +32,8 @@ makeFolder;
 
 # copy maven
 function cpmaven() {
-  INFO "Copy maven3.0.4";
-  eval "cp -rf apache-maven-3.1.1 $HOME/java/";
+  INFO "Copy maven-3.2.3";
+  eval "cp -rf apache-maven-3.2.3 $HOME/java/";
   sleep 1s;
 }
 cpmaven;
@@ -55,12 +55,12 @@ function configSettings() {
   ME=$(whoami);
 
   INFO "Configuration settings.xml of maven";
-  INFO "If you configuration error, you can open the file $HOME/java/apache-maven-3.1.1/conf/settings.xml and manual configuration";
+  INFO "If you configuration error, you can open the file $HOME/java/apache-maven-3.2.3/conf/settings.xml and manual configuration";
 
-  cd "$HOME/java/apache-maven-3.1.1/conf"
+  cd "$HOME/java/apache-maven-3.2.3/conf"
   eval "find -depth -name \"settings.xml\" | xargs sed -i -e 's/JAVA_DIR/\/home\/$ME\/java/g';"
   
-  cd "$HOME/java/apache-maven-3.1.1/conf"
+  cd "$HOME/java/apache-maven-3.2.3/conf"
   read -n100 -p "Enter the your Identity of LDAP: " USER_ID
   echo "";
   read -n100 -p "Enter the your Password of LDAP: " USER_PASS
@@ -72,8 +72,9 @@ function configSettings() {
 configSettings;
 
 
-INFO "Download jdk1.6 and copy it on $HOME/java keep folder name is jdk1.6"
+INFO "Download jdk1.7 and copy it on $HOME/java keep folder name is jdk1.7"
 INFO "Download eclipse and copy it on $HOME/java keep folder name is eclipse"
+INFO "Thank you for used eXo tools ...";
 
 eval "command gnome-terminal"
 
