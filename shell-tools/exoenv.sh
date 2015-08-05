@@ -10,7 +10,9 @@ JAVA_DIR=$PORTABLE_DIR/java
 OLD=$PWD
 cd $JAVA_DIR
 EXO_BASE_DIRECTORY=$PWD
-JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.7"
+if [ ! -n "$JAVA_HOME" ];then
+  JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.7"
+fi
 if [ "$jdk6" == "true" ]; then
   JAVA_HOME="$EXO_BASE_DIRECTORY/jdk1.6"
 fi
@@ -25,27 +27,35 @@ USER_HOME='/cygdrive/c/Documents\ and\ Settings/$USERNAME'
 EXO_PROJECTS_SRC=$EXO_BASE_DIRECTORY/eXoProjects
 EXO_WORKING_DIR=$EXO_BASE_DIRECTORY/exo-working
 
-M2_HOME="$EXO_BASE_DIRECTORY/apache-maven-3.2.3"
+if [ ! -n "$M2_HOME" ]; then
+  M2_HOME="$EXO_BASE_DIRECTORY/apache-maven-3.2.5"
+fi
 
 if [ ! -e $M2_HOME ]; then
-  MV=`find -maxdepth 1 -type d -name '*maven*3.*'`;
+  MV=`find -maxdepth 1 -type d -name '*maven*3.2*'`;
   MV=`echo $MV | awk '{print $1}'`
   M2_HOME=$JAVA_DIR/${MV/\.\//};
   cd $M2_HOME;
   M2_HOME=$PWD;
   cd $JAVA_DIR;
 fi
-
-M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository, http://repository.exoplatform.org/nexus/content/groups/all, http://repo1.maven.org/maven2"
-MAVEN_OPTS="-Xshare:auto -Xms1G -Xmx2G -XX:MaxPermSize=256m" 
+M2_REPO="$EXO_BASE_DIRECTORY/exo-dependencies/repository"
+IS_JAVA_8="false";
+MAX_Per="-XX:MaxPermSize=256m ";
+if [ "${JAVA_HOME/jdk1.8/}" != "$JAVA_HOME" ];then
+  MAX_Per="";
+  IS_JAVA_8="true";
+fi
+MAVEN_OPTS="-Xshare:auto -Xms1G -Xmx2G $MAX_Per";
 T2C="";
-EXO_DEV=true;
-EXO_DEBUG=true;
-EXO_TOMCAT_UNPACK_WARS=true;
+
+#EXO_DEV=true;
+#EXO_DEBUG=true;
+#EXO_TOMCAT_UNPACK_WARS=true;
 EXO_JCR_SESSION_TRACKING=false;
 
 #echo "This is a test"
-JAVA_OPTS="-Xshare:auto -Xms1G -Xmx2G -XX:MaxPermSize=256m -Dexo.directory.base=$EXO_BASE_DIRECTORY" 
+JAVA_OPTS="-Xshare:auto -Xms1G -Xmx2G $MAX_Per -Dexo.directory.base=$EXO_BASE_DIRECTORY" 
 PATH=/usr/local/bin:$JAVA_HOME/bin:$PATH:$M2_HOME/bin
 
 if [ "$OLD" == "$PORTABLE_DIR" ] ; then
@@ -68,7 +78,7 @@ eval "X=(${PWD//\// })"
 if [ -n "${X[9]}" ]; then 
   eval "plfprompt";
 fi
-if [ $(containText "3.2" "$M2_HOME") == "NOK" ]; then
+if [ ! -e "$JAVA_DIR/apache-maven-3.2.5" ]; then 
   source "$TOOL_HOME/upgrade-maven.sh";
 fi
 

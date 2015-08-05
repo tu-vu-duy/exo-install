@@ -108,6 +108,9 @@ function cthelp() {
   echo "==========Using command cthelp for display this help.==========="
 }
 
+EXO_KS=$EXO_PROJECTS_SRC/exodev/ks
+EXO_SOCIAL=$EXO_PROJECTS_SRC/exodev/social
+
 CRPRJ=""
 EXO_TOMCAT_DIR=$EXO_TOMCAT;
 EXO_TOMCAT_BUILD=`echo $EXO_TOMCAT_DIR | grep --color=never 'target' | sed -e 's/\/target.*//'`;
@@ -117,7 +120,7 @@ EXO_PROJECTS=(tools portal gatein social ks forum cs platform platform-ui platfo
 
 # aliass extendsion: we can define quick goto project via use function cdSource with param = {projectname}{version}
 
-alias social="cd social"
+alias social="cd exodev social/"
 alias firefoxs="firefox http://localhost:8080/ &"
 alias eclipse="$JAVA_DIR/eclipse/eclipse &"
 
@@ -125,6 +128,12 @@ alias tomcatCleanRun="tomcatClean && runtomcat"
 alias runtc="runtomcat"
 alias tcrun="runtomcat"
 
+alias svnst="svn st"
+alias svnup="svn up"
+alias svnrmall="exosvn rm"
+alias svnaddall="exosvn add"
+alias svnrvall="svn revert -R \"\""
+alias svndiff="svn diff"
 
 ALISAS_SOURCE="";
 # has function or alias: use hasfc functionname. Ex: hasfs kst
@@ -230,16 +239,24 @@ function crash() {
     else
      getCrsh
   fi
-  eval "sleep 10s && telnet localhost 5000"
+  sleep 10s 
+  eval "telnet localhost 5000"
 }
 
 function getCrsh() {
-   crdir="$TOOL_HOME/libs/crash.war"
-   if [ -e "$crdir" ]; then
-    cp $crdir $EXO_TOMCAT/webapps/crash.war
+   crdir="$JAVA_DIR/exo-dependencies/repository/org/crsh/crsh.jcr.exo/1.1.0/"
+   if [ -e "$crdir/crsh.jcr.exo-1.1.0.war" ]; then
+    cp $crdir/crsh.jcr.exo-1.1.0.war $HOME/
+    mv $HOME/crsh.jcr.exo-1.1.0.war $EXO_TOMCAT/webapps/crash.war
     chmod +x  $EXO_TOMCAT/webapps/crash.war
     INFO "getCrsh: Run crash...."
-    crash;
+   else
+    eval "mkdir -p -m 777 $crdir"
+    cd $crdir
+    wget "http://repository.exoplatform.org/service/local/repositories/crsh-releases/content/org/crsh/crsh.jcr.exo/1.0.0/crsh.jcr.exo-1.0.0.war"
+    cdback
+    sleep 5s 
+    getCrsh
    fi
 }
 
@@ -327,10 +344,13 @@ function CD() {
        fi
      fi
   done
-  if [ $(containText "tomcat-standalone" "$PWD") == "OK" ]; then
-    eval "plfprompt";
-  else
-    eval "newprompt";
+  
+  if [ $(hasfc plfprompt) == "Found" ]; then
+    if [ $(containText "tomcat-standalone" "$PWD") == "OK" ]; then
+      eval "plfprompt";
+    else
+      eval "newprompt";
+    fi
   fi
 }
 
@@ -748,6 +768,32 @@ function ctquickwar () {
    fi
 }
 
+function getWarName() {
+  if [ $(containText "social/webapp/portlet" "$PWD") == "OK" ]; then
+    echo "social-portlet";
+  elif [ $(containText "social/webapp/resources" "$PWD") == "OK" ]; then
+    echo "social-resources";
+  elif [ $(containText "forum/forum/webapp" "$PWD") == "OK" ]; then
+    echo "forum";
+  elif [ $(containText "forum/forumResources" "$PWD") == "OK" ]; then
+    echo "forumResources";
+  elif [ $(containText "forum/poll/webapp" "$PWD") == "OK" ]; then
+    echo "poll";
+  elif [ $(containText "commons/commons-comet-webapp" "$PWD") == "OK" ]; then
+    echo "cometd";
+  elif [ $(containText "commons/commons-extension-webapp" "$PWD") == "OK" ]; then
+    echo "commons-extension";
+  elif [ $(containText "commons/commons-webui-resources" "$PWD") == "OK" ]; then
+    echo "CommonsResources";
+  elif [ $(containText "platform/extension/webapp" "$PWD") == "OK" ]; then
+    echo "platform-extension";
+  elif [ $(containText "calendar-extension/calendar-extension-webapp" "$PWD") == "OK" ]; then
+    echo "calendar-extension";
+  else
+    echo "";
+  fi
+}
+
 function sendtotomcat() {
    tcDir="$1";
    juzu="$2";
@@ -761,11 +807,14 @@ function sendtotomcat() {
 			temp="${X/.*target\//}";
 			y="$(expr match "$temp" '.*\(/\)')";
 			if [ "$y" == "" ]; then
-				folder="${temp/.war/}"
-				INFO "Copy file $temp into $tcDir/webapps"
-				cp $X $tcDir/webapps
-				INFO "Remove old folder $folder"
-				rm -rf $tcDir/webapps/$folder/
+        folder=`getWarName`;
+        if [ ! -n "$folder"  ]; then
+          folder="${temp/.war/}";
+        fi
+        INFO "Copy file $temp into $tcDir/webapps/${folder}.war"
+        cp $X $tcDir/webapps/${folder}.war
+        INFO "Remove old folder $folder"
+        rm -rf $tcDir/webapps/$folder/
 			fi
     fi
    done
@@ -781,7 +830,7 @@ function sendtotomcat() {
 			do
 			 temp="${X/.*target\//}";
 			 t="$(expr match "$temp" '.*\(sources\)')";
-			 y="$(expr match "$temp" '.*\(lib\)')";
+			 y="$(expr match "$temp" '.*\(lib/\)')";
 			 if [ "$t" == "" ] && [ "$y" == "" ]; then
 				 INFO "Copy file $temp into $tcDir/lib"
 				 cp $X $tcDir/lib

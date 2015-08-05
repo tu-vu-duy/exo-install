@@ -9,6 +9,9 @@ alias opjava="nautilus $JAVA_DIR";
 CRBR="";
 UPDATE="";
 
+WARS=(forum-forum-webapp forum-forumResources forum-poll-webapp forum-answer-webapp);
+WARS_R=(forum.war forumResources.war poll.war answer.war);
+
 function gitpatch() {
       eval 'if [ $JIRA_NUMBER == "TEMP" ]; then export JIRA_NUMBER="$(date -u +%h%M)"; fi &&
                echo "Tao file diff cho issue: $JIRA_NUMBER Va save xuong thu muc: $PATCH_FILES" &&
@@ -20,8 +23,25 @@ function gitpdiff() {
                echo "Tao file diff cho issue: $JIRA_NUMBER Va save xuong thu muc: $PATCH_FILES" &&
          git diff $*> $PATCH_FILES/$(date -u +%Y%m%d)-$JIRA_NUMBER.patch'
 }
-
-alias mvneclipse="INFO 'mvn eclipse:eclipse -T2C' && mvn eclipse:eclipse -T2C"
+function mvneclipse() { 
+  eval "INFO 'mvn eclipse:eclipse -T2C $*' && mvn eclipse:eclipse -T2C $*";
+}
+function cmfileall() {
+	pwd_=$PWD;
+  cm=$1;
+  type="$2";
+  if [ -n "$cm" ]; then
+    for X in `ls --color=no $type`; 
+      do
+        if [ -e "$pwd_/$X" ]; then
+          cd "$pwd_";
+          INFO "$cm $X $3";
+          eval "$cm $X $3"; 
+        fi
+    done
+  fi
+  cd $pwd_;
+}
 alias mvnclean="INFO 'mvn eclipse:clean -o -T2C' && mvn eclipse:clean -T2C -o"
 
 alias svndiff="svn diff > tem.patch && sleep 1s && mdf tem.patch && sleep 1s && rm tem.patch";
@@ -124,7 +144,9 @@ function runbysql() {
     fi
     getTomcatDir;
     B=$(date +%H_%M_%d_%S);
-    mv $EXO_TOMCAT/conf/server.xml $EXO_TOMCAT/conf/server_$B.xml;
+    if [ -e "$EXO_TOMCAT/conf/server.xml" ]; then
+      mv $EXO_TOMCAT/conf/server.xml $EXO_TOMCAT/conf/server_$B.xml;
+    fi
     cp $EXO_TOMCAT/conf/server-mysql.xml $EXO_TOMCAT/conf/server.xml;
     cd $EXO_TOMCAT/conf/;
     if [ -e "$TOOL_HOME/libs/server.xml" ]; then
@@ -149,8 +171,16 @@ function runbysql() {
   cd $Opwd;
 }
 
+function importSQL() {
+  eval "time mysql -uroot -p$PASSSQL '$1' < $2";  
+}
+
+function importAllSQL() {
+  eval "cmfileall 'time mysql -uroot -p$PASSSQL $1 <' \*.sql '&'";  
+}
+
 function gedit() {
-	eval "geany $* &";
+  eval "geany $* &";
 }
 
 alias mdfdl="gedit $TOOL_HOME/download.sh &"
@@ -170,12 +200,14 @@ patchDiff="/tmp/my";
 function gitdiff() {
   other="";
   JIRA_NUMBER="";
+  i=0;
   for arg  in "$@" 
     do
     if [ $(containText "-" "$arg") == "OK" ] && [ $(containText "/" "$arg") == "NOK" ]; then
       JIRA_NUMBER=$arg;
     else 
       other="$other $arg";
+      ((i=i+1));
     fi
   done
   
@@ -184,59 +216,73 @@ function gitdiff() {
     JIRA_NUMBER=${br/*\//};
   fi
   file_name="$patchDiff/$(date -u +%Y%m%d)-$JIRA_NUMBER.patch";
-  INFO "git diff $other > $file_name && sleep 1s && gedit $file_name";
-  git diff $other > $file_name && sleep 1s && gedit $file_name;
+  file_name=${file_name/\)/}
+  if [ $i == 1 ]; then
+    if [ "$1" == "." ] || [ -e "$PWD/$1" ] || [ $(containText "HEAD" "$1") == "OK" ]; then
+      INFO "git diff $* > $file_name && sleep 1s && gedit $file_name";
+      git diff $* > $file_name && sleep 1s && gedit $file_name;
+    else
+      INFO "git show $other > $file_name && sleep 1s && gedit $file_name";
+      git show $other > $file_name && sleep 1s && gedit $file_name;
+    fi
+  elif [ $i == 0 ]; then
+    INFO "git diff HEAD > $file_name && sleep 1s && gedit $file_name";
+    git diff HEAD > $file_name && sleep 1s && gedit $file_name;
+  else
+    INFO "git diff $other > $file_name && sleep 1s && gedit $file_name";
+    git diff $other > $file_name && sleep 1s && gedit $file_name;
+  fi
 }
 
 if [ ! -e /tmp/my ]; then
-	eval "mkdir -p -m 777 /tmp/my";
+  eval "mkdir -p -m 777 /tmp/my";
 fi
 
 PDate="$(date -u +%Y-%m-%d)";
 FIRST="false";
 if [ ! -e /tmp/my/$PDate.my ]; then
-	eval "rm -rf /tmp/my/*";
-	eval "echo '$PDate' > /tmp/my/$PDate.my";
-	#eval "insync-kde &"
-	FIRST="true";
+  eval "rm -rf /tmp/my/*";
+  eval "echo '$PDate' > /tmp/my/$PDate.my";
+  #eval "insync-kde &"
+  FIRST="true";
   echo "$TOOL_HOME";
   eval "rm -rf $HOME/.local/share/Trash/files/* $HOME/.local/share/Trash/info/* $HOME/.goutputstream* &";
 fi
 
 
 function gitpull () {
-	if [ -n "$1" ]; then
-		git pull $*;
-	else
-		git pull --all;
-	fi	
+  if [ -n "$1" ]; then
+    git pull $*;
+  else
+    git pull --all;
+  fi  
 }
 
 function readEnter() {
-	read -n100 -p "Please input the $1: " keypress;
-	echo "$keypress";
+  read -n100 -p "Please input the $1: " keypress;
+  echo "$keypress";
 }
 
 function gitnewfix() {
-	local issue="";
-	local vers="";
-	if [ -n "$1" ]; then
-		issue="$1";
-		if [ -n "$2" ]; then
-			vers="$2";
-		else
-			vers=$(readEnter "version");
-		fi
-	else
-		issue=$(readEnter "issue");
-		vers=$(readEnter "version");
-	fi
-	
-	if [ -n "$issue" ] && [ -n "$vers" ]; then 
-		INFO "git checkout -b \"fix/$vers/$issue\" \"platform/stable/$vers\""
-		git checkout -b "fix/$vers/$issue" "platform/stable/$vers"
-	fi
-	
+  local issue="";
+  local vers="";
+  if [ -n "$1" ]; then
+    issue="$1";
+    if [ -n "$2" ]; then
+      vers="$2";
+    else
+      vers=$(readEnter "version");
+    fi
+  else
+    issue=$(readEnter "issue");
+    vers=$(readEnter "version");
+  fi
+  
+  if [ -n "$issue" ] && [ -n "$vers" ]; then 
+    INFO "git checkout -b \"fix/$vers/$issue\" \"platform/stable/$vers\""
+    git checkout -b "fix/$vers/$issue" "platform/stable/$vers"
+  fi
+  
 }
 
 function renameByindex() {
@@ -268,10 +314,14 @@ alias gitbr="git br";
 alias gitlg="git lg";
 
 function tomcatinject() {
-	getTomcatDir;
-  if [ -e "$TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar" ]; then
-    INFO "cp $TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/";
-    cp "$TOOL_HOME/libs/injection-forum-4.1.0-SNAPSHOT.jar" "$EXO_TOMCAT/lib/"
+  getTomcatDir;
+  if [ -e "$TOOL_HOME/libs/injection-forum-4.2.x-SNAPSHOT.jar" ]; then
+    INFO "cp $TOOL_HOME/libs/injection-forum-4.2.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+    cp "$TOOL_HOME/libs/injection-forum-4.2.x-SNAPSHOT.jar" "$EXO_TOMCAT/lib/"
+  fi
+  if [ -e "$TOOL_HOME/libs/tomcat7-websocket.jar" ] && [ $(containText "notification" "$PWD") == "OK" ]; then
+    INFO "cp $TOOL_HOME/libs/tomcat7-websocket.jar $EXO_TOMCAT/lib/";
+    cp "$TOOL_HOME/libs/tomcat7-websocket.jar" "$EXO_TOMCAT/lib/"
   fi
   if [ -e "$TOOL_HOME/libs/social-extras-injection-4.1.0-SNAPSHOT.jar" ]; then
     INFO "cp $TOOL_HOME/libs/social-extras-injection-4.1.0-SNAPSHOT.jar $EXO_TOMCAT/lib/";
@@ -280,8 +330,8 @@ function tomcatinject() {
 }
 
 function sendtoplftomcat() {
-	getTomcatDir;
-	eval "sendtotomcat $EXO_TOMCAT $*";	
+  getTomcatDir;
+  eval "sendtotomcat $EXO_TOMCAT $*";  
 }
 
 alias tomcatsend="killTomcat && sendtoplftomcat"
@@ -291,11 +341,11 @@ function mvnnoclean() {
 }
 
 function tomcatbuild() {
-	eval "mvninstall $* && killTomcat && sendtoplftomcat"
+  eval "mvninstall $* && killTomcat && sendtoplftomcat"
 }
 
 function zzzzcm() {
-	eval "XX=$PWD && cd $EXO_TOMCAT/webapps/ && find -maxdepth 1 -mindepth 1 -type d -exec rm -rf {} \;";
+  eval "XX=$PWD && cd $EXO_TOMCAT/webapps/ && find -maxdepth 1 -mindepth 1 -type d -exec rm -rf {} \;";
 }
 
 function updateStyle() {
@@ -315,36 +365,40 @@ function updateStyle() {
     dirfolder="${dirfolder}src/main/webapp";
     y="$(expr match "$temp" '.*\(/\)')";
     if [ "$y" == "" ]; then
+      folderTC=`getWarName`;
       folder="${temp/.war/}"
-      if [ -e "$tcDir/webapps/$folder/skin" ]; then
-        INFO "Remove old folder $folder/skin"
-        rm -rf $tcDir/webapps/$folder/skin/*
+      if [ ! -n "$folderTC"  ]; then
+        folderTC="$folder";
+      fi
+      if [ -e "$tcDir/webapps/$folderTC/skin" ]; then
+        INFO "Remove old folder $folderTC/skin"
+        rm -rf $tcDir/webapps/$folderTC/skin/*
       fi
       if [ -e "${cssdirfolder}${folder}/skin" ]; then
-        INFO "Copy files ${cssdirfolder}${folder}/skin into $tcDir/webapps/$folder/"
-        eval "cp -rf ${cssdirfolder}${folder}/skin $tcDir/webapps/$folder/"
+        INFO "Copy files ${cssdirfolder}${folder}/skin into $tcDir/webapps/$folderTC/"
+        eval "cp -rf ${cssdirfolder}${folder}/skin $tcDir/webapps/$folderTC/"
       fi
       if [ -e "${dirfolder}/templates" ]; then
-        INFO "Copy files ${dirfolder}/templates into $tcDir/webapps/$folder/"
-        eval "cp -rf ${dirfolder}/templates $tcDir/webapps/$folder/"
+        INFO "Copy files ${dirfolder}/templates into $tcDir/webapps/$folderTC/"
+        eval "cp -rf ${dirfolder}/templates $tcDir/webapps/$folderTC/"
       fi
       if [ -e "${dirfolder}/groovy" ]; then
-        INFO "Copy files ${dirfolder}/groovy into $tcDir/webapps/$folder/"
-        eval "cp -rf ${dirfolder}/groovy $tcDir/webapps/$folder/"      
+        INFO "Copy files ${dirfolder}/groovy into $tcDir/webapps/$folderTC/"
+        eval "cp -rf ${dirfolder}/groovy $tcDir/webapps/$folderTC/"      
       fi
       if [ -e "${dirfolder}/javascript" ]; then      
-        INFO "Copy files ${dirfolder}/javascript into $tcDir/webapps/$folder/"
-        eval "cp -rf ${dirfolder}/javascript $tcDir/webapps/$folder/"
+        INFO "Copy files ${dirfolder}/javascript into $tcDir/webapps/$folderTC/"
+        eval "cp -rf ${dirfolder}/javascript $tcDir/webapps/$folderTC/"
       fi
     fi
    done
 }
 
 function sendinject() {
-	getTomcatDir;
-	if [ $(expr match $EXO_TOMCAT "$PWD") -gt 0 ]; then
-		INFO "Run tomcatinject...";
-		eval "tomcatinject";
+  getTomcatDir;
+  if [ $(expr match $EXO_TOMCAT "$PWD") -gt 0 ]; then
+    INFO "Run tomcatinject...";
+    eval "tomcatinject";
         if [ -e "$TOOL_HOME/exo-sample.properties" ]; then
             INFO "cp $TOOL_HOME/exo-sample.properties $EXO_TOMCAT/gatein/conf/exo.properties";
             if [ -e "$EXO_TOMCAT/gatein/conf/exo.properties" ]; then
@@ -355,37 +409,50 @@ function sendinject() {
             mv $EXO_TOMCAT/gatein/conf/exo-sample.properties $EXO_TOMCAT/gatein/conf/exo.properties
         fi
 
-		if [ -e "$TOOL_HOME/libs/crash.war" ]; then
-			INFO "cp $TOOL_HOME/libs/crash.war $EXO_TOMCAT/webapps/";
-			cp "$TOOL_HOME/libs/crash.war" "$EXO_TOMCAT/webapps/"
-		fi
+    if [ -e "$TOOL_HOME/libs/crash.war" ]; then
+      INFO "cp $TOOL_HOME/libs/crash.war $EXO_TOMCAT/webapps/";
+      cp "$TOOL_HOME/libs/crash.war" "$EXO_TOMCAT/webapps/"
+    fi
 
-		if [ -e "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" ]; then
-			INFO "cp $TOOL_HOME/libs/mysql-connector-java-5.1.13.jar $EXO_TOMCAT/lib/";
-			cp "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" "$EXO_TOMCAT/lib/"
-		fi
+    if [ -e "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" ]; then
+      INFO "cp $TOOL_HOME/libs/mysql-connector-java-5.1.13.jar $EXO_TOMCAT/lib/";
+      cp "$TOOL_HOME/libs/mysql-connector-java-5.1.13.jar" "$EXO_TOMCAT/lib/"
+    fi
 
         if [ -e "$TOOL_HOME/libs/logback.xml" ]; then
-			INFO "cp $TOOL_HOME/libs/logback.xml $EXO_TOMCAT/conf/";
-			cp "$TOOL_HOME/libs/logback.xml" "$EXO_TOMCAT/conf/"
-		fi
-	fi
+      INFO "cp $TOOL_HOME/libs/logback.xml $EXO_TOMCAT/conf/";
+      cp "$TOOL_HOME/libs/logback.xml" "$EXO_TOMCAT/conf/"
+    fi
+  fi
+  
+  changeConfTomcat;
 }
 
 function applyless() {
-	getTomcatDir;
-	eval "updateStyle $EXO_TOMCAT"
+  getTomcatDir;
+  eval "updateStyle $EXO_TOMCAT"
+}
+
+function imv() {
+  INFO "mv $*";
+  eval "mv $*";  
+}
+
+function mvconf() {
+  if [ -e "$EXO_TOMCAT_DIR/server_b.xml" ]; then
+    imv $EXO_TOMCAT_DIR/server_b.xml $EXO_TOMCAT_DIR/conf/server.xml
+  fi
 }
 
 function mvninstall(){
-	isTomcat="";
-	callback="";
-	test="-Dmaven.test.skip=true";
-	debug="";
-	other="$UPDATE";
-	pPrivate="-Pexo-private";
-	command_="mvn clean install";
-	if [ $(containText "tomcat" "$PWD") == "OK" ]; then
+  isTomcat="";
+  callback="";
+  test="-Dmaven.test.skip=true";
+  debug="";
+  other="$UPDATE";
+  pPrivate="";
+  command_="mvn clean install";
+  if [ $(containText "enterprise-tomcat" "$PWD") == "OK" ]; then
     CRBR_=$(currentBranch);
     CRBR_=${CRBR_/*\//};
     finder=$(find -maxdepth 3 -mindepth 3 -type d -name "*$CRBR_*");
@@ -397,61 +464,67 @@ function mvninstall(){
     fi
     eval "$tomcat";
     command_="mvn install";
-		isTomcat="-Dskip-archive -T2C";
-		callback=" && $tomcat && sendinject";
-		test="";
+    isTomcat="-Dskip-archive -T2C";
+    callback=" && $tomcat && sendinject";
+    pPrivate="-Pexo-private"
+    test="";
     if [ "$SET_DIR" == "OK" ]; then
+      killTomcat;
       irm "$EXO_TOMCAT_DIR/lib/*";
       irm "$EXO_TOMCAT_DIR/webapps/*";
       irm "$EXO_TOMCAT_DIR/logs/*";
       irm "$EXO_TOMCAT_DIR/work/*";
       irm "$EXO_TOMCAT_DIR/temp/*";
       local B=$(date +%H_%M_%d_%S);
-      mv $EXO_TOMCAT_DIR/conf/server.xml $EXO_TOMCAT_DIR/conf/server_$B.xml;
+      if [ -e "$EXO_TOMCAT/conf/server.xml" ]; then
+        cp $EXO_TOMCAT_DIR/conf/server.xml $EXO_TOMCAT_DIR/server_b.xml 
+        imv $EXO_TOMCAT_DIR/conf/server.xml $EXO_TOMCAT_DIR/conf/server_$B.xml;
+      fi
     fi
-	fi
+  fi
 
-	if [ $(containText "commons-extension-webapp" "$PWD") == "OK" ]; then 
-		 eval "sed -i -e 's/<\/dependencies>/<\/dependencies><build><finalName>commons-extension<\/finalName><\/build>/g' $PWD/pom.xml";
-		 callback="$callback && git co pom.xml";
-	fi
-	if [ $(containText "commons-webui-resources" "$PWD") == "OK" ]; then 
-		 eval "sed -i -e 's/<build>/<build><finalName>CommonsResources<\/finalName>/g' $PWD/pom.xml";
-		 callback="$callback && git co pom.xml";
-	fi
-	for arg  in "$@" 
+  if [ $(containText "commons-extension-webapp" "$PWD") == "OK" ]; then 
+     eval "sed -i -e 's/<\/dependencies>/<\/dependencies><build><finalName>commons-extension<\/finalName><\/build>/g' $PWD/pom.xml";
+     callback="$callback && git co pom.xml";
+  fi
+  if [ $(containText "commons-webui-resources" "$PWD") == "OK" ]; then 
+     eval "sed -i -e 's/<build>/<build><finalName>CommonsResources<\/finalName>/g' $PWD/pom.xml";
+     callback="$callback && git co pom.xml";
+  fi
+  for arg  in "$@" 
     do
      arg="${arg/--/}" 
      arg="${arg//./}"
-		 if [ "$arg" == "test=true" ] || [ "$arg" == "test" ]; then
-				test="";
-		 elif [ "$arg" == "test=false" ]; then
-				test="-Dmaven.test.skip=true";
-		 elif [ "$arg" == "debug" ] || [ "$arg" == "debug=true" ]; then 
-				debug=" -Dmaven.surefire.debug=true";
-		 elif [ "$arg" == "eclipse" ]; then 
-				command_="mvn eclipse:eclipse";
-		 elif [ "$arg" == "eclean" ]; then 
-				command_="mvn eclipse:clean";
-		 elif [ "$arg" == "clean" ]; then 
-				command_="mvn clean";
-		 elif [ $(containText "class=" "$arg") == "OK" ]; then 
-				test=" -Dtest=${arg/class=/}";
+     if [ "$arg" == "test=true" ] || [ "$arg" == "test" ]; then
+        test="";
+     elif [ "$arg" == "test=false" ]; then
+        test="-Dmaven.test.skip=true";
+     elif [ "$arg" == "debug" ] || [ "$arg" == "debug=true" ]; then 
+        debug=" -Dmaven.surefire.debug=true";
+     elif [ "$arg" == "eclipse" ]; then 
+        command_="mvn eclipse:eclipse";
+     elif [ "$arg" == "eclean" ]; then 
+        command_="mvn eclipse:clean";
+     elif [ "$arg" == "clean" ]; then 
+        command_="mvn clean";
+     elif [ $(containText "class=" "$arg") == "OK" ]; then 
+        test=" -Dtest=${arg/class=/}";
+     elif [ $(containText "-old" "$arg") == "OK" ]; then 
+        callback="$callback && setTomcatDir && mvconf";
      elif [ $(containText "-o" "$arg") == "OK" ]; then 
-				pPrivate="$arg";
-		 else 
-				other="$other $arg";
-		 fi
+        pPrivate="$arg";
+     else 
+        other="$other $arg";
+     fi
 
    done
 
-
-	INFO "$command_ $isTomcat $test$debug $pPrivate $T2C $other $callback";
+  INFO "$command_ $isTomcat $test$debug $pPrivate $T2C $other $callback";
   eval "$command_ $isTomcat $test$debug $pPrivate $T2C $other $callback";
 }
 
 function buildSkin() {
-	eval "mvninstall $* && applyless";
+  eval "mvninstall $* && applyless";
 }
 #lessc styles.less > styles.css
 
@@ -473,33 +546,46 @@ function mousedie() {
 mousedie;
 
 function JDBC() {
-	grep --color=never --after-context=0 --before-context=1 'JDBC queries was executed but the maximum is' test.txt | sed -e 's/--.*//g'> ntest.txt	
+  grep --color=never --after-context=0 --before-context=1 'JDBC queries was executed but the maximum is' test.txt | sed -e 's/--.*//g'> ntest.txt  
 }
 
-alias bcommon='cd commons && cd commons-api/ && tomcatbuild && cd ../ && cd commons-component-common/ && tomcatbuild && cd ..';
+function bcommon() {
+  more="$*";
+  eval 'cd commons && cd commons-api/ && tomcatbuild $more && cd ../ && cd commons-component-common/ && tomcatbuild $more && cd ..';
+}
 
 function mvntest() {
-	for arg  in "$@" 
+  for arg  in "$@" 
   do
-  	INFO "mvn install  -Pexo-private -Dtest=$arg";
-		eval "mvn install  -Pexo-private -Dtest=$arg";
+    INFO "mvn install  -Pexo-private -Dtest=$arg";
+    eval "mvn install  -Pexo-private -Dtest=$arg";
   done
 }
 
-PROJECTS="commons/ social/ wiki/ calendar/ forum/ platform/ integration/"
+function mvnresolve() {
+  INFO "mvn dependency:resolve -T2C $*";
+  eval "mvn dependency:resolve -T2C $*";
+}
+
+function mvnsources() {
+  INFO "mvn dependency:sources -T2C $*";
+  eval "mvn dependency:sources -T2C $*";
+}
+
+PROJECTS="commons/ social/ forum/ integration/ platform/"
 
 function ball() {
-	cm="feature/stabilization";
+  cm="feature/stabilization";
 
-	if [ -n "$1" ]; then
-		cm="$1";
-	fi
-	INFO "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";
-	eval "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";	
+  if [ -n "$1" ]; then
+    cm="$1";
+  fi
+  INFO "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";
+  eval "cmprojectall '$PROJECTS platform-private-distributions/plf-enterprise-tomcat-standalone/' 'git co $cm && git pull --all && mvninstall'";  
 }
 
 _mvninstall() {
-	local cur="${COMP_WORDS[COMP_CWORD]}";
+  local cur="${COMP_WORDS[COMP_CWORD]}";
   local opts="eclipse clean eclean test=true debug class= -U -o dependency:build-classpath dependency:sources dependency:analyze-report dependency:analyze dependency:tree dependency:unpack dependency:resolve dependency:copy dependency:analyze-only dependency:resolve-plugins ${COMPREPLY[@]}";
   # Array variable storing the possible completions.
   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
@@ -507,7 +593,7 @@ _mvninstall() {
 complete -F "_mvninstall" -o "default" "mvninstall"
 
 _gitdiff() {
-	local cur="${COMP_WORDS[COMP_CWORD]}";
+  local cur="${COMP_WORDS[COMP_CWORD]}";
   local opts="HEAD master HEAD~ origin/HEAD ${COMPREPLY[@]}";
   # Array variable storing the possible completions.
   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
@@ -517,7 +603,7 @@ complete -F "_gitdiff" -o "default" "gitdiff"
 
 
 _runbysql() {
-	local cur="${COMP_WORDS[COMP_CWORD]}";
+  local cur="${COMP_WORDS[COMP_CWORD]}";
   local opts="--user=root --pass=root --db-jcr=plf_mic_jcr --db-idm=plf_mic_idm --help -h --rm -r ${COMPREPLY[@]}";
   # Array variable storing the possible completions.
   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
@@ -547,7 +633,7 @@ complete -F "_gitdiff" -o "default" "gitfilediff"
 
 alias resource="source $HOME/.bashrc"
 
-ALL_PROJECT="gatein/ platform-ui/ commons/ social/ ecms/ wiki/ forum/ calendar/ platform/ integration/ platform-public-distributions/ platform-private-distributions/";
+ALL_PROJECT="gatein/ platform-ui/ commons/ social/ ecms/ wiki/ forum/ calendar/ integration/ platform/ platform-public-distributions/ platform-private-distributions/";
 
 function gitloggrep() {
   local vs="-200";
@@ -567,12 +653,12 @@ function tomcatbuildall() {
 }
 
 function teamblip() {
-	INFO "mvninstall -o  && killTomcat && sleep 1s";
-	eval "mvninstall -o  && killTomcat && sleep 1s";
-	INFO "setTomcatDir 'stabilization'";
-	eval "setTomcatDir 'stabilization'";
-	INFO "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
-	eval "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+  INFO "mvninstall -o  && killTomcat && sleep 1s";
+  eval "mvninstall -o  && killTomcat && sleep 1s";
+  INFO "setTomcatDir 'stabilization'";
+  eval "setTomcatDir 'stabilization'";
+  INFO "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
+  eval "cp target/team-b-addon-lib-1.0.x-SNAPSHOT.jar $EXO_TOMCAT/lib/";
 }
 
 function killas1() {
@@ -603,57 +689,65 @@ function JAVA() {
 }
 
 function echoTomcatdir() {
-	INFO "$EXO_TOMCAT";
+  INFO "$EXO_TOMCAT";
 }
 
 function fakemail() {
-	if [ ! -e "$HOME/fake-mails" ]; then
-		eval "mkdir -m 777 $HOME/fake-mails"
-	fi
-	if [ -e "$TOOL_HOME/fake-mail.properties" ]; then
-		getTomcatDir;
-		INFO "cp $TOOL_HOME/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties";
-		if [ -e "$EXO_TOMCAT/gatein/conf/exo.properties" ]; then
-			local B=$(date +%H_%M_%d_%S);
-			mv $EXO_TOMCAT/gatein/conf/exo.properties $EXO_TOMCAT/gatein/conf/exo${B}.properties
-		fi
-		cp "$TOOL_HOME/fake-mail.properties" "$EXO_TOMCAT/gatein/conf/"
-		mv $EXO_TOMCAT/gatein/conf/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties
-	fi
-	
-	##
-	eval "java -jar $TOOL_HOME/libs/fakeSMTP-1.11.jar --start-server --port 3535 --output-dir $HOME/fake-mails -p 3535 &";
+  if [ ! -e "$HOME/fake-mails" ]; then
+    eval "mkdir -m 777 $HOME/fake-mails"
+  fi
+  if [ -e "$TOOL_HOME/fake-mail.properties" ]; then
+    getTomcatDir;
+    INFO "cp $TOOL_HOME/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties";
+    if [ -e "$EXO_TOMCAT/gatein/conf/exo.properties" ]; then
+      local B=$(date +%H_%M_%d_%S);
+      mv $EXO_TOMCAT/gatein/conf/exo.properties $EXO_TOMCAT/gatein/conf/exo${B}.properties
+    fi
+    cp "$TOOL_HOME/fake-mail.properties" "$EXO_TOMCAT/gatein/conf/"
+    mv $EXO_TOMCAT/gatein/conf/fake-mail.properties $EXO_TOMCAT/gatein/conf/exo.properties
+  fi
+  
+  ##
+  eval "java -jar $TOOL_HOME/libs/fakeSMTP-1.11.jar --start-server --bind-address 127.0.0.1 --port 3535 --output-dir $HOME/fake-mails -p 3535 &";
 }
 
 function makezip() {
-	if [ -n "$1" ]; then
-		INFO "zip -r '$1' *";
-		eval "zip -r '$1' *";
-	else 
-		INFO "makezip 'file-name.zip'";
-	fi
+  if [ -n "$1" ]; then
+    INFO "zip -r '$1' *";
+    eval "zip -r '$1' *";
+  else 
+    INFO "makezip 'file-name.zip'";
+  fi
 }
 function bnoupadte() {
-	UPDATE=" -o ";
+  UPDATE=" -o ";
 }
 function bupadte() {
-	UPDATE="";
+  UPDATE="";
 }
 
-alias gitcherrypick="git cherry-pick "
+alias gitcherrypick="git cherry-pick ";
 
 
+function splitdump() {
+  file="$1";
+  if [ -e "$PWD/$file" ]; then
+    db1="$1";
+    if [ ! -n "$db1" ]; then
+      INFO "";
+    fi
+  fi
+}
+
+function changeConfTomcat() {
+  CUR="$PWD";
+  cdtomcat && cd conf;
+  local A=`grep 'ContextConfig.jarsToSkip=\*\.jar' catalina.properties`;
+  if [ ! -n "$A" ]; then
+    findsed 'ContextConfig\.jarsToSkip=' 'ContextConfig.jarsToSkip=\*\.jar' 'catalina.properties'; 
+  fi
+  cd $CUR;
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+source "$TOOL_HOME/social-rest-api.sh";

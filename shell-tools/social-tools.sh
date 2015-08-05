@@ -146,7 +146,8 @@ function checkoutFeature() {
 }
 
 function changeVersion() {
-	eval "mvn --batch-mode release:update-versions -DdevelopmentVersion=$1";
+  INFO "mvn --batch-mode release:update-versions -DdevelopmentVersion=$*";
+	eval "mvn --batch-mode release:update-versions -DdevelopmentVersion=$*";
 }
 
 function helpsocial() {

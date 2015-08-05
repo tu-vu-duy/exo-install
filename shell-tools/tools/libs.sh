@@ -96,6 +96,24 @@ export HOSTFILE=$HOME/.hosts	# Put a list of remote hosts in ~/.hosts
 #-----------------------
 
 # Define some colors first:
+export COLOR_NC='\e[0m' # No Color
+export COLOR_WHITE='\e[1;37m'
+export COLOR_BLACK='\e[0;30m'
+export COLOR_BLUE='\e[0;34m'
+export COLOR_LIGHT_BLUE='\e[1;34m'
+export COLOR_GREEN='\e[0;32m'
+export COLOR_LIGHT_GREEN='\e[1;32m'
+export COLOR_CYAN='\e[0;36m'
+export COLOR_LIGHT_CYAN='\e[1;36m'
+export COLOR_RED='\e[0;31m'
+export COLOR_LIGHT_RED='\e[1;31m'
+export COLOR_PURPLE='\e[0;35m'
+export COLOR_LIGHT_PURPLE='\e[1;35m'
+export COLOR_BROWN='\e[0;33m'
+export COLOR_YELLOW='\e[1;33m'
+export COLOR_GRAY='\e[0;30m'
+export COLOR_LIGHT_GRAY='\e[0;37m'
+
 red='\e[0;31m'
 RED='\e[1;31m'
 blue='\e[0;34m'
@@ -109,7 +127,8 @@ NC='\e[0m'              # No Color
 echo -e "${CYAN}This is BASH ${RED}${BASH_VERSION%.*}${CYAN} - DISPLAY on ${RED}$DISPLAY${NC}\n"
 date
 if [ -x /usr/games/fortune ]; then
-    /usr/games/fortune -s     # makes our day a bit more fun.... :-)
+    local text=`/usr/games/fortune -s`     # makes our day a bit more fun.... :-)
+    echo -e "${COLOR_LIGHT_CYAN}$text${NC}\n";
 else 
 	sudo apt-get install fortune;
 fi
@@ -231,7 +250,7 @@ alias df='df -kTh'
 
 # The 'ls' family (this assumes you use the GNU ls)
 alias la='ls -Al'               # show hidden files
-alias ls='ls -hF --color'	# add colors for filetype recognition
+alias lh='ls -hF --color'	# add colors for filetype recognition
 alias lx='ls -lXB'              # sort by extension
 alias lk='ls -lSr'              # sort by size
 alias lc='ls -lcr'		# sort by change time  

@@ -212,8 +212,8 @@ function findgrep() {
   local tp=`eval "getfiletypes $inp"`;
   if [ -n "$tp" ]; then 
     key="$2";
-    INFO "find $tp | xargs grep --color=always '$key'";
-    eval "find $tp | xargs grep --color=always '$key'";
+    INFO "find $tp | xargs grep --color=always '$key' $3 $4 $5";
+    eval "find $tp | xargs grep --color=always '$key' $3 $4 $5";
   fi
 }
 

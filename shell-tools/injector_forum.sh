@@ -406,6 +406,16 @@ function injection_topic() {
   fi
 }
 
+_injection_topic ()  
+{
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  # The params
+  local opts="1syntax: numberTopic_maxUser_fromForum_toForum_fromUser"
+  # Array variable storing the possible completions.
+  COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+complete -F "_injection_topic" -o "default" "injection_topic"
+
 
 # injection_post numberPost=$1 maxUser=$2 fromTopic=$3 toTopic=$4 fromUser=$5
 POST=0;
@@ -460,7 +470,19 @@ function injection_space() {
 		  eval "$arg";
 		fi
 	 done
-	 eval "forumInject -t space -p 'number=$number&userPrefix=$userPrefix&fromUser=$from&toUser=$to&spacePrefix=$prefix'";
+   if [ ! -n "$userPrefix" ]; then
+      userPrefix="user";
+   fi
+   if [ ! -n "$spacePrefix" ]; then
+      spacePrefix="space_inject";
+   fi   
+   if [ ! -n "$from" ]; then
+      from="0";
+   fi   
+   if [ ! -n "$to" ]; then
+      to="1";
+   fi   
+	 INFO "forumInject -t space -p 'number=$number&userPrefix=$userPrefix&fromUser=$from&toUser=$to&spacePrefix=$spacePrefix'";
 }
 _injection_space ()  
 {

@@ -107,10 +107,11 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-#---------------------------- START EXO-TOOLS ---------------------------------
+#-------------------------------------------------------------
 
-TOOL_HOME="$HOME/java/eXoProjects/exo-install/shell-tools";
-EXO_TOMCAT="$HOME/java/eXoProjects/platform-private-distributions/plf-enterprise-tomcat-standalone/target/";
+TOOL_HOME="$HOME/java/eXoProjects/exodev/shell-tools";
+EXO_TOMCAT="$HOME/java/eXoProjects/exodev/platform-private-distributions/plf-enterprise-tomcat-standalone/target/platform-4.1.0-SNAPSHOT/platform-4.1.0-SNAPSHOT";
+
 
 if [ ! -f $HOME/.gitignore_global ] ; then
     cp $TOOL_HOME/repace.gitignore_global $HOME/.gitignore_global
